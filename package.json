@@ -29,8 +29,10 @@
     "jiti": "2.6.1",
     "npm-run-all2": "8.0.4",
     "oxlint": "1.42.0",
+    "sharp": "0.34.5",
     "typescript": "5.9.3",
     "vite": "beta",
+    "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-vue-devtools": "8.0.5",
     "vue-tsc": "3.2.4"
   },
