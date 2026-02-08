@@ -4,6 +4,7 @@ export interface Video {
   thumbnail: string;
   channel: string;
   channelId?: string;
+  publishedAt?: string;
 }
 
 export interface SavedChannel {
@@ -25,6 +26,7 @@ export interface YouTubeSearchResponse {
       title: string;
       channelTitle: string;
       channelId: string;
+      publishedAt: string;
       thumbnails: {
         medium: {
           url: string;
@@ -33,3 +35,4 @@ export interface YouTubeSearchResponse {
     };
   }>;
 }
+

@@ -62,7 +62,8 @@ export const useYouTubeAPI = (apiKey: string) => {
       videoId: item.id.videoId,
       thumbnail: item.snippet.thumbnails.medium.url,
       channel: item.snippet.channelTitle,
-      channelId: item.snippet.channelId
+      channelId: item.snippet.channelId,
+      publishedAt: item.snippet.publishedAt
     }));
   };
 

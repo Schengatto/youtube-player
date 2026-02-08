@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Video } from '@/types';
+import { formatRelativeTime } from '@/utils/date';
 
 interface Props {
   video: Video;
@@ -41,6 +42,9 @@ const emit = defineEmits<{
           </svg>
         </button>
       </div>
+      <p v-if="video.publishedAt" class="video-date">
+        {{ formatRelativeTime(video.publishedAt) }}
+      </p>
     </div>
   </div>
 </template>
@@ -144,6 +148,12 @@ const emit = defineEmits<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.video-date {
+  font-size: 0.75rem;
+  color: #666;
+  margin: 0.25rem 0 0 0;
 }
 
 .save-channel-btn {
