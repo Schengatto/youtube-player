@@ -4,12 +4,14 @@ import type { Video } from '@/types';
 import { useSettings } from '@/composables/useSettings';
 import { useYouTubeAPI } from '@/composables/useYouTubeAPI';
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
+import { useSavedVideos } from '@/composables/useSavedVideos';
 import { extractVideoIdFromUrl, getVideoFromId } from '@/utils/youtube';
 import VideoCard from '@/components/VideoCard.vue';
 import VideoPlayer from '@/components/VideoPlayer.vue';
 import ApiKeyModal from '@/components/ApiKeyModal.vue';
 import PreferencesModal from '@/components/PreferencesModal.vue';
 import ChannelsPanel from '@/components/ChannelsPanel.vue';
+import SavedVideosPanel from '@/components/SavedVideosPanel.vue';
 import ShareToast from '@/components/ShareToast.vue';
 import LinkInput from '@/components/LinkInput.vue';
 
@@ -27,6 +29,14 @@ const {
   savePreferences
 } = useSettings();
 
+const {
+  savedVideos,
+  isVideoSaved,
+  toggleSaveVideo,
+  removeVideo: removeSavedVideo,
+  clearAllSavedVideos
+} = useSavedVideos();
+
 const searchQuery = ref('');
 const videos = ref<Video[]>([]);
 const selectedVideo = ref<Video | null>(null);
@@ -34,6 +44,7 @@ const isMinimized = ref(false);
 const isLoading = ref(false);
 const isLoadingMore = ref(false);
 const showChannels = ref(false);
+const showSavedVideos = ref(false);
 const showApiKeyModal = ref(false);
 const showPreferencesModal = ref(false);
 const showShareToast = ref(false);
@@ -101,7 +112,7 @@ const loadRecommendedVideos = async () => {
   isLoading.value = true;
   nextPageToken.value = undefined;
   currentChannelId.value = undefined;
-  currentOffset.value = 0; // Reset offset
+  currentOffset.value = 0;
   viewMode.value = 'recommended';
 
   try {
@@ -278,6 +289,22 @@ const handlePlayVideo = (video: Video) => {
   selectedVideo.value = video;
   isMinimized.value = false;
 };
+
+const handleSelectSavedVideo = (video: Video) => {
+  showSavedVideos.value = false;
+  selectedVideo.value = video;
+  isMinimized.value = false;
+};
+
+const handleRemoveSavedVideo = (videoId: string) => {
+  removeSavedVideo(videoId);
+};
+
+const handleClearAllSavedVideos = () => {
+  if (confirm('Sei sicuro di voler rimuovere tutti i video salvati?')) {
+    clearAllSavedVideos();
+  }
+};
 </script>
 
 <template>
@@ -296,6 +323,15 @@ const handlePlayVideo = (video: Video) => {
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
             <span class="btn-label">Interessi</span>
+          </button>
+          <button class="icon-btn" :class="{ active: showSavedVideos }" @click="showSavedVideos = !showSavedVideos"
+            :title="`Salvati per dopo (${savedVideos.length})`">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+            </svg>
+            <span class="btn-label">Salvati</span>
+            <span class="badge">{{ savedVideos.length }}</span>
           </button>
           <button class="icon-btn channels-btn" :class="{ active: showChannels }" @click="showChannels = !showChannels"
             :title="`Canali salvati (${savedChannels.length})`">
@@ -339,6 +375,10 @@ const handlePlayVideo = (video: Video) => {
     <ChannelsPanel :show="showChannels" :channels="savedChannels" @close="showChannels = false"
       @select-channel="handleChannelSearch" @remove-channel="removeChannel" />
 
+    <SavedVideosPanel :show="showSavedVideos" :videos="savedVideos" @close="showSavedVideos = false"
+      @select-video="handleSelectSavedVideo" @remove-video="handleRemoveSavedVideo"
+      @clear-all="handleClearAllSavedVideos" />
+
     <div v-if="isLoading && videos.length === 0" class="loading-state">
       <div class="loader"></div>
       <p>Caricamento video...</p>
@@ -361,8 +401,9 @@ const handlePlayVideo = (video: Video) => {
       </div>
       <div class="videos-grid">
         <VideoCard v-for="(video, index) in videos" :key="video.videoId" :video="video" :index="index"
-          :is-channel-saved="video.channelId ? isChannelSaved(video.channelId) : false" @play="handlePlayVideo"
-          @toggle-channel="toggleChannelSave" />
+          :is-channel-saved="video.channelId ? isChannelSaved(video.channelId) : false"
+          :is-video-saved="isVideoSaved(video.videoId)" @play="handlePlayVideo" @toggle-channel="toggleChannelSave"
+          @toggle-save-video="toggleSaveVideo" />
       </div>
       <div v-if="isLoadingMore" class="loading-more">
         <div class="loader-small"></div>
@@ -380,14 +421,8 @@ const handlePlayVideo = (video: Video) => {
       <p>Cerca video o aggiorna i tuoi interessi per vedere contenuti personalizzati</p>
     </div>
 
-    <VideoPlayer
-      :video="selectedVideo"
-      :is-minimized="isMinimized"
-      @close="handleCloseVideo"
-      @share="handleShare"
-      @minimize="handleMinimize"
-      @maximize="handleMaximize"
-    />
+    <VideoPlayer :video="selectedVideo" :is-minimized="isMinimized" @close="handleCloseVideo" @share="handleShare"
+      @minimize="handleMinimize" @maximize="handleMaximize" />
 
     <ApiKeyModal :show="showApiKeyModal" :has-api-key="hasApiKey" @close="showApiKeyModal = false"
       @save="handleSaveApiKey" />

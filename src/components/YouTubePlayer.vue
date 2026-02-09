@@ -295,7 +295,7 @@ const searchVideos = async (): Promise<void> => {
   isLoading.value = true;
   try {
     const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(searchQuery.value)}&type=video&key=${apiKey.value}`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=6&q=${encodeURIComponent(searchQuery.value)}&type=video&key=${apiKey.value}`
     );
 
     if (!response.ok) {
@@ -362,7 +362,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
   showChannels.value = false;
   try {
     const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=12&order=date&type=video&key=${apiKey.value}`
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=6&order=date&type=video&key=${apiKey.value}`
     );
 
     if (!response.ok) {
@@ -391,7 +391,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 
 <template>
   <div class="app-container">
-    <!-- Header -->
     <header class="header">
       <div class="header-content">
         <h1 class="title">LibreTube</h1>
@@ -430,7 +429,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
       </div>
     </header>
 
-    <!-- Search Bar -->
     <div class="search-container">
       <form @submit.prevent="searchVideos" class="search-form">
         <input v-model="searchQuery" type="text" placeholder="Cerca video su YouTube..." class="search-input" />
@@ -456,7 +454,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
       </button>
     </div>
 
-    <!-- Saved Channels Panel -->
     <div v-if="showChannels" class="channels-panel-container">
       <div class="channels-panel">
         <h2 class="channels-title">I tuoi canali salvati</h2>
@@ -485,13 +482,11 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
       </div>
     </div>
 
-    <!-- Loading State -->
     <div v-if="isLoading && videos.length === 0" class="loading-state">
       <div class="loader"></div>
       <p>Caricamento video...</p>
     </div>
 
-    <!-- Videos Grid -->
     <div v-if="videos.length > 0" class="videos-container">
       <h2 v-if="!searchQuery" class="section-title">Video consigliati per te</h2>
       <div class="videos-grid">
@@ -526,7 +521,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
       </div>
     </div>
 
-    <!-- Empty State -->
     <div v-if="!isLoading && videos.length === 0 && hasApiKey && hasPreferences" class="empty-state">
       <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -537,7 +531,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
       <p>Cerca video o aggiorna i tuoi interessi per vedere contenuti personalizzati</p>
     </div>
 
-    <!-- Video Player Modal -->
     <Teleport to="body">
       <div v-if="selectedVideo" class="modal-overlay" @click="closePlayer">
         <div class="modal-content" @click.stop>
@@ -572,7 +565,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
         </div>
       </div>
 
-      <!-- API Key Configuration Modal -->
       <div v-if="showApiKeyModal" class="modal-overlay" @click="showApiKeyModal = false">
         <div class="api-key-modal" @click.stop>
           <div class="api-key-header">
@@ -613,7 +605,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
         </div>
       </div>
 
-      <!-- User Preferences Modal -->
       <div v-if="showPreferencesModal" class="modal-overlay" @click="showPreferencesModal = false">
         <div class="preferences-modal" @click.stop>
           <div class="preferences-header">
@@ -656,7 +647,6 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
         </div>
       </div>
 
-      <!-- Share Toast Notification -->
       <div v-if="showShareToast" class="share-toast">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -104,23 +104,20 @@ watch(() => props.video, (newVideo) => {
   opacity: 0;
 }
 
-/* Player Container - si adatta in base allo stato */
 .player-container {
   position: fixed;
   z-index: 1000;
   background: #1a1a1a;
   border-radius: 12px;
   overflow: hidden;
-  /* Nessuna transizione per evitare il resize animato */
 }
 
-/* Modalità normale - centrato */
 .player-container:not(.minimized) {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: calc(100% - 2rem);
-  max-width: 1200px;
+  width: calc(100% - 1rem);
+  max-width: 1400px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }

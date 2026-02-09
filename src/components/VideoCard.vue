@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { Video } from '@/types';
 import { formatRelativeTime } from '@/utils/date';
-import {normalizeText} from "@/utils/string";
+import { normalizeText } from "@/utils/string";
 
 interface Props {
   video: Video;
   index: number;
   isChannelSaved: boolean;
+  isVideoSaved: boolean;
 }
 
 defineProps<Props>();
@@ -14,6 +15,7 @@ defineProps<Props>();
 const emit = defineEmits<{
   play: [video: Video];
   toggleChannel: [name: string, id: string];
+  toggleSaveVideo: [video: Video];
 }>();
 </script>
 
@@ -28,6 +30,15 @@ const emit = defineEmits<{
           </svg>
         </div>
       </div>
+      <!-- NUOVO: Pulsante Salva per dopo -->
+      <button @click.stop="emit('toggleSaveVideo', video)" class="save-video-btn" :class="{ saved: isVideoSaved }"
+        :title="isVideoSaved ? 'Rimuovi dai salvati' : 'Salva per dopo'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+          :fill="isVideoSaved ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+        </svg>
+      </button>
     </div>
     <div class="video-info">
       <h3 class="video-title">{{ normalizeText(video.title) }}</h3>
@@ -39,7 +50,7 @@ const emit = defineEmits<{
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
             :fill="isChannelSaved ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
-            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
         </button>
       </div>
@@ -115,6 +126,47 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   color: #fff;
+}
+
+/* NUOVO: Stile per il pulsante Salva per dopo */
+.save-video-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #fff;
+  opacity: 0;
+  z-index: 2;
+}
+
+.video-card:hover .save-video-btn {
+  opacity: 1;
+}
+
+.save-video-btn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.save-video-btn.saved {
+  opacity: 1;
+  background: rgba(250, 0, 0, 0.9);
+  border-color: rgba(250, 0, 0, 0.5);
+}
+
+.save-video-btn.saved:hover {
+  background: rgba(250, 0, 0, 1);
 }
 
 .video-info {
