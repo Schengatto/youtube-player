@@ -54,9 +54,8 @@ const userPreferences = ref<UserPreferences>({
 });
 const tempInterests = ref<string>('');
 
-const CRYPTO_KEY = 'yt-player-secret-key-2024';
+const K = 'yt-player-secret-key-2024';
 
-// Categorie predefinite per suggerimenti
 const DEFAULT_CATEGORIES = [
   'tecnologia',
   'musica',
@@ -72,7 +71,7 @@ const DEFAULT_CATEGORIES = [
 
 const encrypt = (text: string): string => {
   const encrypted = text.split('').map((char, i) => {
-    return String.fromCharCode(char.charCodeAt(0) ^ CRYPTO_KEY.charCodeAt(i % CRYPTO_KEY.length));
+    return String.fromCharCode(char.charCodeAt(0) ^ K.charCodeAt(i % K.length));
   }).join('');
   return btoa(encrypted);
 };
@@ -81,7 +80,7 @@ const decrypt = (encryptedText: string): string => {
   try {
     const decrypted = atob(encryptedText);
     return decrypted.split('').map((char, i) => {
-      return String.fromCharCode(char.charCodeAt(0) ^ CRYPTO_KEY.charCodeAt(i % CRYPTO_KEY.length));
+      return String.fromCharCode(char.charCodeAt(0) ^ K.charCodeAt(i % K.length));
     }).join('');
   } catch {
     return '';
@@ -143,11 +142,9 @@ const loadApiKey = async (): Promise<void> => {
     if (savedApiKey) {
       apiKey.value = decrypt(savedApiKey);
 
-      // Se ha la chiave API ma non le preferenze, mostra il modal delle preferenze
       if (!hasPreferences.value) {
         showPreferencesModal.value = true;
       } else {
-        // Carica video consigliati automaticamente
         await loadRecommendedVideos();
       }
     } else {
@@ -168,7 +165,6 @@ const saveApiKey = async (): Promise<void> => {
       showApiKeyModal.value = false;
       apiKeyInput.value = '';
 
-      // Dopo aver salvato la chiave, mostra il modal delle preferenze
       if (!hasPreferences.value) {
         showPreferencesModal.value = true;
       } else {
@@ -196,7 +192,6 @@ const savePreferences = async (): Promise<void> => {
   showPreferencesModal.value = false;
   tempInterests.value = '';
 
-  // Carica i video consigliati
   await loadRecommendedVideos();
 };
 
@@ -223,7 +218,6 @@ const loadRecommendedVideos = async (): Promise<void> => {
   const allVideos: Video[] = [];
 
   try {
-    // Cerca video per ogni interesse dell'utente
     for (const interest of userPreferences.value.interests.slice(0, 3)) {
       try {
         const response = await fetch(
@@ -244,14 +238,12 @@ const loadRecommendedVideos = async (): Promise<void> => {
           }
         }
 
-        // Piccola pausa per evitare rate limiting
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
         console.error(`Error loading videos for ${interest}:`, error);
       }
     }
 
-    // Rimuovi duplicati e mescola
     const uniqueVideos = allVideos.filter((video, index, self) =>
       index === self.findIndex(v => v.videoId === video.videoId)
     );
@@ -800,7 +792,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 }
 
 .search-input:focus {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(234, 32, 32, 0.5);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -809,7 +801,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 }
 
 .search-btn {
-  background: #3b82f6;
+  background: #fa0000;
   border: none;
   border-radius: 8px;
   padding: 0.9rem 1.5rem;
@@ -874,7 +866,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
   width: 48px;
   height: 48px;
   border: 4px solid rgba(59, 130, 246, 0.2);
-  border-top-color: #3b82f6;
+  border-top-color: #fa0000;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -1087,7 +1079,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 }
 
 .play-icon {
-  background: #3b82f6;
+  background: #fa0000;
   border-radius: 50%;
   width: 48px;
   height: 48px;
@@ -1147,7 +1139,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 
 .save-channel-btn.saved {
   background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  color: #fa0000;
 }
 
 .save-channel-btn:hover {
@@ -1289,7 +1281,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 }
 
 .api-key-header {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #fa0000, #2563eb);
   padding: 1.5rem;
   color: #fff;
 }
@@ -1354,7 +1346,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
   background: rgba(59, 130, 246, 0.1);
   padding: 0.75rem;
   border-radius: 6px;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #fa0000;
 }
 
 .api-key-form {
@@ -1377,7 +1369,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 }
 
 .api-key-input:focus {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(234, 32, 32, 0.5);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -1400,7 +1392,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
 }
 
 .api-key-save-btn {
-  background: #3b82f6;
+  background: #fa0000;
   color: #fff;
 }
 
@@ -1579,7 +1571,7 @@ const searchChannelVideos = async (channelId: string): Promise<void> => {
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: #3b82f6;
+  background: #fa0000;
   color: #fff;
   padding: 0.9rem 1.5rem;
   border-radius: 8px;

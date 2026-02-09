@@ -95,7 +95,7 @@ const handleSubmit = () => {
 }
 
 .api-key-header {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #fa0000, #2563eb);
   padding: 1.5rem;
   color: #fff;
 }
@@ -160,7 +160,7 @@ const handleSubmit = () => {
   background: rgba(59, 130, 246, 0.1);
   padding: 0.75rem;
   border-radius: 6px;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #fa0000;
 }
 
 .api-key-form {
@@ -183,7 +183,7 @@ const handleSubmit = () => {
 }
 
 .api-key-input:focus {
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgba(234, 32, 32, 0.5);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -206,7 +206,7 @@ const handleSubmit = () => {
 }
 
 .api-key-save-btn {
-  background: #3b82f6;
+  background: #fa0000;
   color: #fff;
 }
 

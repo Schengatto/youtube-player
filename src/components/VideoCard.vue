@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Video } from '@/types';
 import { formatRelativeTime } from '@/utils/date';
+import {normalizeText} from "@/utils/string";
 
 interface Props {
   video: Video;
@@ -29,7 +30,7 @@ const emit = defineEmits<{
       </div>
     </div>
     <div class="video-info">
-      <h3 class="video-title">{{ video.title }}</h3>
+      <h3 class="video-title">{{ normalizeText(video.title) }}</h3>
       <div class="video-channel">
         <p class="channel-name">{{ video.channel }}</p>
         <button v-if="video.channelId" @click.stop="emit('toggleChannel', video.channel, video.channelId)"
@@ -62,7 +63,7 @@ const emit = defineEmits<{
 
 .video-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(234, 32, 32, 0.5);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
@@ -106,7 +107,7 @@ const emit = defineEmits<{
 }
 
 .play-icon {
-  background: #3b82f6;
+  background: #fa0000;
   border-radius: 50%;
   width: 48px;
   height: 48px;
@@ -171,8 +172,8 @@ const emit = defineEmits<{
 }
 
 .save-channel-btn.saved {
-  background: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  background: rgba(237, 237, 237, 0.96);
+  color: #fa0000;
 }
 
 .save-channel-btn:hover {
@@ -181,8 +182,8 @@ const emit = defineEmits<{
 }
 
 .save-channel-btn.saved:hover {
-  background: rgba(59, 130, 246, 0.25);
-  color: #60a5fa;
+  background: rgba(237, 237, 237, 0.96);
+  color: #fa0000;
 }
 
 @keyframes fadeIn {

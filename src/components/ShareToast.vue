@@ -24,7 +24,7 @@ defineProps<Props>();
   bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
-  background: #3b82f6;
+  background: #fa0000;
   color: #fff;
   padding: 0.9rem 1.5rem;
   border-radius: 8px;

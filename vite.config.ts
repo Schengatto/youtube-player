@@ -1,4 +1,3 @@
-// vite.config.js - Aggiungi questo al tuo file esistente
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -21,7 +20,7 @@ export default defineConfig({
         name: 'LibreTube Player',
         short_name: 'LT Player',
         description: 'Search and watch YouTube videos',
-        theme_color: '#3b82f6',
+        theme_color: '#fa0000',
         background_color: '#0f0f0f',
         display: 'standalone',
         icons: [
