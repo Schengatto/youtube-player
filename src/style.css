@@ -1,0 +1,85 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* ── ACCENT (purple brand color) ─────────────── */
+  --accent:       #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-light: #a78bfa;
+  --accent-10:    rgba(139, 92, 246, 0.10);
+  --accent-15:    rgba(139, 92, 246, 0.15);
+  --accent-20:    rgba(139, 92, 246, 0.20);
+  --accent-30:    rgba(139, 92, 246, 0.30);
+  --accent-50:    rgba(139, 92, 246, 0.50);
+
+  /* ── DANGER (red, YouTube branding) ──────────── */
+  --danger:     #fa0000;
+  --danger-15:  rgba(250, 0, 0, 0.15);
+  --danger-50:  rgba(250, 0, 0, 0.50);
+  --danger-85:  rgba(250, 0, 0, 0.85);
+
+  /* ── LINK (blue) ─────────────────────────────── */
+  --link:       #60a5fa;
+  --link-hover: #93bbfc;
+  --link-15:    rgba(59, 130, 246, 0.15);
+  --link-30:    rgba(59, 130, 246, 0.30);
+
+  /* ── BACKGROUNDS ──────────────────────────────── */
+  --bg-app:     #0f0f0f;
+  --bg-surface: #1a1a1a;
+  --bg-black:   #000000;
+
+  /* ── TEXT (7-level scale) ─────────────────────── */
+  --text-primary:   #ffffff;
+  --text-secondary: #e0e0e0;
+  --text-tertiary:  #cccccc;
+  --text-muted:     #aaaaaa;
+  --text-subtle:    #888888;
+  --text-faint:     #666666;
+  --text-ghost:     #555555;
+
+  /* ── WHITE OVERLAYS (surfaces & borders on dark) ─ */
+  --white-5:  rgba(255, 255, 255, 0.05);
+  --white-6:  rgba(255, 255, 255, 0.06);
+  --white-8:  rgba(255, 255, 255, 0.08);
+  --white-10: rgba(255, 255, 255, 0.10);
+  --white-12: rgba(255, 255, 255, 0.12);
+  --white-15: rgba(255, 255, 255, 0.15);
+  --white-20: rgba(255, 255, 255, 0.20);
+  --white-25: rgba(255, 255, 255, 0.25);
+  --white-30: rgba(255, 255, 255, 0.30);
+  --white-40: rgba(255, 255, 255, 0.40);
+
+  /* ── BLACK OVERLAYS ───────────────────────────── */
+  --black-30: rgba(0, 0, 0, 0.30);
+  --black-40: rgba(0, 0, 0, 0.40);
+  --black-60: rgba(0, 0, 0, 0.60);
+  --black-70: rgba(0, 0, 0, 0.70);
+  --black-85: rgba(0, 0, 0, 0.85);
+  --black-90: rgba(0, 0, 0, 0.90);
+
+  /* ── MISC ─────────────────────────────────────── */
+  --off-white: rgba(237, 237, 237, 0.96); /* badge bg, channel icon */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+}

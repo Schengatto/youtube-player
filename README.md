@@ -1,48 +1,152 @@
-# youtube-player
+# Tube-Too Player
 
-This template should help get you started developing with Vue 3 in Vite.
+A personalized YouTube player built as a Progressive Web App. Search videos, save channels, create playlists, bookmark moments, and get recommendations based on your interests — all from a clean, distraction-free interface.
 
-## Recommended IDE Setup
+**Live:** [tube-too.netlify.app](https://tube-too.netlify.app)
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Features
 
-## Recommended Browser Setup
+### Personalized Recommendations
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Choose your interests on first launch and get a curated video feed. Change them anytime from settings.
 
-## Type Support for `.vue` Imports in TS
+### Search & Browse
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+- Full-text video search
+- Browse channel videos directly
+- Paste any YouTube URL or video ID to play instantly
+- Infinite scroll pagination
 
-## Customize configuration
+### Channels
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+Save your favorite channels for quick access. Browse their latest uploads without leaving the app.
 
-## Project Setup
+### Playlists
+
+Create custom playlists, add/remove/reorder videos, and play them in sequence. Share playlists via URL — recipients can import them with one click.
+
+### Bookmarks
+
+Bookmark specific moments in a video (with timestamp). Jump back to any bookmark later, or share it as a link with `?v=ID&t=seconds`.
+
+### Saved Videos
+
+Save individual videos for later viewing. Manage your library from the saved videos panel.
+
+### YouTube Import
+
+Import your YouTube subscriptions, playlists, and liked videos via Google OAuth. One-click import, no credentials stored — the token is used once and discarded.
+
+### Video Sharing
+
+Share videos and bookmarks via native share (mobile) or clipboard copy. Shared links include rich previews (Open Graph + Twitter Card) for Telegram, WhatsApp, Slack, Discord, and other platforms.
+
+### Minimized Player
+
+Minimize the video player to keep browsing while watching. The player stays visible in a corner of the screen.
+
+### Multi-Language
+
+Available in 9 languages: Italian, English, French, German, Spanish, Portuguese, Chinese, Japanese, Hindi. Language is selected on first launch and can be changed in settings.
+
+### PWA & Offline
+
+Installable as a native app on mobile and desktop. Auto-update notifications when a new version is deployed.
+
+## Tech Stack
+
+| Layer | Technology |
+| ----- | --------- |
+| Frontend | Vue 3 + Composition API (`<script setup>`) |
+| Language | TypeScript 5.9 (strict) |
+| Build | Vite + vue-tsc |
+| PWA | vite-plugin-pwa (Workbox) |
+| Backend | Cloudflare Worker (API proxy) |
+| Hosting | Netlify (frontend) + Cloudflare (worker) |
+| Lint | ESLint + oxlint |
+| Package Manager | pnpm |
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20.19+ or 22.12+
+- pnpm
+
+### Install
 
 ```sh
 pnpm install
 ```
 
-### Compile and Hot-Reload for Development
+### Development
 
 ```sh
+# Frontend only
 pnpm dev
+
+# Frontend + Worker (requires wrangler setup)
+pnpm dev:all
 ```
 
-### Type-Check, Compile and Minify for Production
+### Build
 
 ```sh
 pnpm build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### Lint
 
 ```sh
 pnpm lint
 ```
+
+## Project Structure
+
+```txt
+src/
+├── components/       # Vue components (18 total)
+├── composables/      # Stateful composables (singleton pattern)
+├── i18n/             # Translations (9 locales)
+├── types/            # TypeScript type definitions
+├── utils/            # Pure utility functions
+├── assets/css/       # Component-level CSS
+├── App.vue           # Root component (orchestrator)
+└── main.ts           # Entry point
+
+worker/
+├── src/
+│   ├── index.ts      # Routing, caching, rate limiting, CORS
+│   ├── youtube-api.ts    # YouTube Data API v3 calls
+│   ├── youtube-oauth.ts  # Google OAuth + YouTube import
+│   └── types.ts      # Shared types
+└── wrangler.toml     # Cloudflare Worker config
+```
+
+## Architecture
+
+The app follows a **single-page architecture** with no router — all view state is managed by the `useAppState` composable.
+
+**State management** uses singleton composables: module-level `ref()` values are shared across all consumers and auto-persisted to localStorage via `watch`.
+
+**Backend proxy**: the frontend never calls YouTube directly. All API requests go through a Cloudflare Worker that handles authentication, caching (10min TTL via CF Cache API), rate limiting (60 req/min/IP), and CORS.
+
+## Worker Setup
+
+The worker requires the following secrets (set via `wrangler secret put`):
+
+- `YOUTUBE_API_KEY` — YouTube Data API v3 key
+- `GOOGLE_CLIENT_ID` — Google OAuth client ID (for YouTube import)
+- `GOOGLE_CLIENT_SECRET` — Google OAuth client secret
+
+Configuration in `wrangler.toml`:
+
+- `ALLOWED_ORIGIN` — Frontend URL for CORS
+- `CACHE_TTL` — Cache duration in seconds
+- `RATE_LIMIT_*` — Rate limiting config
+
+## Contributing
+
+Contributions are welcome. Please open an issue first to discuss what you'd like to change.
+
+See [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) for reporting issues.

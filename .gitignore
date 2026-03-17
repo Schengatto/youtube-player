@@ -37,3 +37,19 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Environment secrets
+.env
+.env.local
+.env.production
+worker/.dev.vars
+
+# Worker local state
+worker/.wrangler/
+
+# Misc
+chromaerr.txt
+
+# AI tools
+.claude
+CLAUDE.md

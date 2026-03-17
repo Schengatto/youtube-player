@@ -1,0 +1,249 @@
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--black-60);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer-panel {
+  width: 100%;
+  max-width: 600px;
+  height: 100%;
+  background: var(--bg-surface);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.drawer-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--white-10);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: var(--black-30);
+  flex-shrink: 0;
+}
+
+.drawer-title { margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+
+.close-btn {
+  background: var(--white-8);
+  border: none;
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.close-btn:hover { background: var(--accent-15); color: var(--accent-light); }
+
+.drawer-content { flex: 1; overflow-y: auto; padding: 1rem; }
+
+.drawer-content::-webkit-scrollbar { width: 8px; }
+.drawer-content::-webkit-scrollbar-track { background: var(--white-5); }
+.drawer-content::-webkit-scrollbar-thumb { background: var(--white-20); border-radius: 4px; }
+
+.no-playlists {
+  color: var(--text-subtle);
+  margin: 2rem 0;
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.playlists-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.playlist-item {
+  background: var(--white-5);
+  border: 1px solid var(--white-8);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.playlist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.1rem 0.5rem 0.1rem 0;
+}
+
+.playlist-toggle {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.75rem;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.playlist-toggle:hover { background: var(--white-5); }
+.playlist-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; overflow: hidden; }
+.playlist-name { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.playlist-count { font-size: 0.75rem; color: var(--text-subtle); }
+
+.share-btn {
+  background: var(--white-8);
+  border: none;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.share-btn:hover { background: var(--accent-15); color: var(--accent-light); }
+
+.delete-btn {
+  background: var(--accent-10);
+  border: none;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+}
+
+.delete-btn:hover { background: var(--accent-20); }
+
+.playlist-videos { border-top: 1px solid var(--white-6); padding: 0.5rem; }
+
+.empty-playlist {
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  margin: 0;
+}
+
+.video-list { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.video-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 6px;
+  padding: 0.25rem;
+  transition: background 0.15s ease;
+}
+
+.video-row:hover { background: var(--white-5); }
+
+.video-play-btn {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-radius: 6px;
+  padding: 0.25rem;
+}
+
+.video-thumb { width: 64px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--bg-black); }
+.video-meta { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+
+.video-title {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.video-channel { font-size: 0.72rem; color: var(--text-subtle); }
+
+.move-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.move-btn {
+  background: none;
+  border: none;
+  border-radius: 3px;
+  width: 20px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.move-btn:hover:not(:disabled) { background: var(--white-8); color: var(--text-secondary); }
+.move-btn:disabled { opacity: 0.2; cursor: default; }
+
+.remove-video-btn {
+  background: none;
+  border: none;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.remove-video-btn:hover { background: var(--accent-15); color: var(--accent-light); }
+
+.drawer-enter-active, .drawer-leave-active { transition: opacity 0.3s ease; }
+.drawer-enter-active .drawer-panel, .drawer-leave-active .drawer-panel { transition: transform 0.3s ease; }
+.drawer-enter-from, .drawer-leave-to { opacity: 0; }
+.drawer-enter-from .drawer-panel, .drawer-leave-to .drawer-panel { transform: translateX(100%); }
+
+.expand-enter-active, .expand-leave-active { transition: opacity 0.2s ease; overflow: hidden; }
+.expand-enter-from, .expand-leave-to { opacity: 0; }
+
+@media (max-width: 768px) {
+  .drawer-panel { max-width: 100%; }
+  .drawer-header { padding: 1rem; }
+}

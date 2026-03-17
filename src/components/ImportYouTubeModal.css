@@ -1,0 +1,175 @@
+.import-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--black-60);
+  backdrop-filter: blur(4px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.import-modal {
+  background: var(--bg-surface);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.import-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--white-10);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--black-30);
+}
+
+.import-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.import-close {
+  background: var(--white-8);
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.import-close:hover {
+  background: var(--accent-15);
+  color: var(--accent-light);
+}
+
+.import-body {
+  padding: 2rem 1.5rem;
+}
+
+.import-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.import-status p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.import-status.error svg {
+  color: var(--danger);
+}
+
+.import-status.success svg {
+  color: #4ade80;
+}
+
+.import-complete-title {
+  font-size: 1.1rem !important;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+}
+
+.import-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.import-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--white-5);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.import-count {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--accent);
+  min-width: 2rem;
+}
+
+.import-hint {
+  font-size: 0.85rem !important;
+  color: var(--text-tertiary) !important;
+}
+
+.import-btn {
+  background: var(--white-10);
+  border: none;
+  color: var(--text-primary);
+  padding: 0.625rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  margin-top: 0.5rem;
+}
+
+.import-btn:hover {
+  background: var(--white-15);
+}
+
+.import-btn.primary {
+  background: var(--accent);
+  color: white;
+  width: 100%;
+}
+
+.import-btn.primary:hover {
+  filter: brightness(1.1);
+}
+
+.loader {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--white-10);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.modal-enter-active, .modal-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-enter-active .import-modal, .modal-leave-active .import-modal {
+  transition: transform 0.25s ease;
+}
+
+.modal-enter-from, .modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from .import-modal, .modal-leave-to .import-modal {
+  transform: scale(0.95);
+}

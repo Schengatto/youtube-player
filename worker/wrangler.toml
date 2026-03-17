@@ -1,0 +1,9 @@
+name = "tube-too-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://tube-too.netlify.app"
+CACHE_TTL = 600
+RATE_LIMIT_MAX = 60
+RATE_LIMIT_WINDOW = 60

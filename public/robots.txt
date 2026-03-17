@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tube-too.netlify.app/sitemap.xml
