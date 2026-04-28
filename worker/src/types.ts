@@ -16,6 +16,7 @@ export interface Video {
   channel: string;
   channelId?: string;
   publishedAt?: string;
+  duration?: string;
 }
 
 export interface VideoDetails {
