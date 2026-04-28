@@ -104,6 +104,28 @@ async function ytFetch(path: string, apiKey: string): Promise<Response> {
   return fetch(`${YOUTUBE_API_BASE}${path}${sep}key=${apiKey}`);
 }
 
+async function fetchDurations(apiKey: string, videoIds: string[]): Promise<Map<string, string>> {
+  if (videoIds.length === 0) return new Map();
+
+  const params = new URLSearchParams({
+    part: 'contentDetails',
+    id: videoIds.join(','),
+  });
+
+  const res = await ytFetch(`/videos?${params}`, apiKey);
+  if (!res.ok) return new Map();
+
+  const data = await res.json() as { items?: Array<{ id: string; contentDetails?: { duration: string } }> };
+
+  const map = new Map<string, string>();
+  for (const item of data.items || []) {
+    if (item.contentDetails?.duration) {
+      map.set(item.id, item.contentDetails.duration);
+    }
+  }
+  return map;
+}
+
 export async function searchVideos(apiKey: string, query: string, maxResults: number, pageToken?: string): Promise<SearchResult> {
   const params = new URLSearchParams({
     part: 'snippet',
@@ -121,6 +143,11 @@ export async function searchVideos(apiKey: string, query: string, maxResults: nu
   const videos = (data.items || [])
     .filter(item => item.id.videoId && item.snippet.liveBroadcastContent !== 'live')
     .map(mapSearchItem);
+
+  const durations = await fetchDurations(apiKey, videos.map(v => v.videoId));
+  for (const video of videos) {
+    video.duration = durations.get(video.videoId);
+  }
 
   return { videos, nextPageToken: data.nextPageToken };
 }
@@ -146,6 +173,11 @@ export async function searchByChannel(apiKey: string, channelId: string, maxResu
   const videos = (data.items || [])
     .filter(item => item.snippet.resourceId.kind === 'youtube#video' && item.snippet.title !== PRIVATE_VIDEO_TITLE && item.snippet.title !== DELETED_VIDEO_TITLE)
     .map(mapPlaylistItem);
+
+  const durations = await fetchDurations(apiKey, videos.map(v => v.videoId));
+  for (const video of videos) {
+    video.duration = durations.get(video.videoId);
+  }
 
   return { videos, nextPageToken: data.nextPageToken };
 }
