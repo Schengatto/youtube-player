@@ -107,22 +107,25 @@ async function ytFetch(path: string, apiKey: string): Promise<Response> {
 async function fetchDurations(apiKey: string, videoIds: string[]): Promise<Map<string, string>> {
   if (videoIds.length === 0) return new Map();
 
-  const params = new URLSearchParams({
-    part: 'contentDetails',
-    id: videoIds.join(','),
-  });
-
-  const res = await ytFetch(`/videos?${params}`, apiKey);
-  if (!res.ok) return new Map();
-
-  const data = await res.json() as { items?: Array<{ id: string; contentDetails?: { duration: string } }> };
-
+  const BATCH_SIZE = 50;
   const map = new Map<string, string>();
-  for (const item of data.items || []) {
-    if (item.contentDetails?.duration) {
-      map.set(item.id, item.contentDetails.duration);
+
+  for (let i = 0; i < videoIds.length; i += BATCH_SIZE) {
+    const batch = videoIds.slice(i, i + BATCH_SIZE);
+    const params = new URLSearchParams({
+      part: 'contentDetails',
+      id: batch.join(','),
+    });
+    const res = await ytFetch(`/videos?${params}`, apiKey);
+    if (!res.ok) continue;
+    const data = await res.json() as { items?: Array<{ id: string; contentDetails?: { duration: string } }> };
+    for (const item of data.items || []) {
+      if (item.contentDetails?.duration) {
+        map.set(item.id, item.contentDetails.duration);
+      }
     }
   }
+
   return map;
 }
 
