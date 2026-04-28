@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
+    "test": "vitest run",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache"
@@ -25,10 +26,12 @@
     "@types/node": "24.10.9",
     "@vitejs/plugin-vue": "6.0.3",
     "@vue/eslint-config-typescript": "14.6.0",
+    "@vue/test-utils": "^2.4.9",
     "@vue/tsconfig": "0.8.1",
     "eslint": "9.39.2",
     "eslint-plugin-oxlint": "1.42.0",
     "eslint-plugin-vue": "10.7.0",
+    "happy-dom": "^20.9.0",
     "jiti": "2.6.1",
     "npm-run-all2": "8.0.4",
     "oxlint": "1.42.0",
@@ -37,6 +40,7 @@
     "vite": "beta",
     "vite-plugin-pwa": "^1.2.0",
     "vite-plugin-vue-devtools": "8.0.5",
+    "vitest": "^4.1.5",
     "vue-tsc": "3.2.4",
     "workbox-window": "^7.4.0"
   },
