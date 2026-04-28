@@ -33,4 +33,8 @@ describe('formatDuration', () => {
   it('returns empty string for malformed input', () => {
     expect(formatDuration('invalid')).toBe('');
   });
+
+  it('returns empty string for bare PT', () => {
+    expect(formatDuration('PT')).toBe('');
+  });
 });
