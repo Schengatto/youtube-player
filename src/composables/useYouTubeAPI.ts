@@ -28,7 +28,7 @@ const fetchApi = async (path: string): Promise<Response> => {
 };
 
 export const useYouTubeAPI = () => {
-  const searchVideos = async (query: string, maxResults = PAGE_SIZE.DEFAULT, pageToken?: string): Promise<SearchResult> => {
+  const searchVideos = async (query: string, maxResults: number = PAGE_SIZE.DEFAULT, pageToken?: string): Promise<SearchResult> => {
     const params = new URLSearchParams({
       q: query,
       maxResults: String(maxResults),
@@ -79,7 +79,7 @@ export const useYouTubeAPI = () => {
 
   const searchPopularByKeywords = async (
     keywords: string[],
-    maxResults = PAGE_SIZE.KEYWORDS,
+    maxResults: number = PAGE_SIZE.KEYWORDS,
   ): Promise<Video[]> => {
     const allVideos: Video[] = [];
 

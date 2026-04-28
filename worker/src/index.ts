@@ -266,7 +266,7 @@ export default {
     const cacheTtl = parseInt(env.CACHE_TTL || '600');
     const cacheKey = new Request(`https://cache${getCacheKey(url)}`, request);
     const cache = caches.default;
-    let cached = await cache.match(cacheKey);
+    const cached = await cache.match(cacheKey);
     if (cached) {
       const newHeaders = new Headers(cached.headers);
       Object.entries(cors).forEach(([k, v]) => newHeaders.set(k, v));
