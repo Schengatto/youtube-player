@@ -33,6 +33,9 @@ interface YTVideoItem {
     likeCount?: string;
     commentCount?: string;
   };
+  contentDetails?: {
+    duration: string;
+  };
 }
 
 interface YTPlaylistItem {
@@ -92,6 +95,7 @@ function mapVideoItem(item: YTVideoItem): Video {
     channel: item.snippet.channelTitle,
     channelId: item.snippet.channelId,
     publishedAt: item.snippet.publishedAt,
+    duration: item.contentDetails?.duration,
   };
 }
 
@@ -148,7 +152,7 @@ export async function searchByChannel(apiKey: string, channelId: string, maxResu
 
 export async function getTrending(apiKey: string, regionCode: string, maxResults: number): Promise<SearchResult> {
   const params = new URLSearchParams({
-    part: 'snippet',
+    part: 'snippet,contentDetails',
     chart: 'mostPopular',
     regionCode,
     maxResults: String(maxResults),
