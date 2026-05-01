@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
@@ -65,5 +66,10 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+  // @ts-expect-error - vitest types are not fully compatible with Vite's defineConfig in this version
+  test: {
+    environment: 'happy-dom',
+    include: ['src/**/*.test.ts'],
+  },
 })

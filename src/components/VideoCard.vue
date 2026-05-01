@@ -3,6 +3,7 @@ import type { Video } from '@/types';
 import { formatRelativeTime } from '@/utils/date';
 import { normalizeText } from "@/utils/string";
 import { useI18n } from '@/composables/useI18n';
+import { formatDuration } from '@/utils/duration';
 
 const { t } = useI18n();
 
@@ -55,6 +56,9 @@ const emit = defineEmits<{
           <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
         </svg>
       </button>
+      <span v-if="video.duration" class="duration-badge">
+        {{ formatDuration(video.duration) }}
+      </span>
     </div>
     <div class="video-info">
       <h3 class="video-title">{{ normalizeText(video.title) }}</h3>

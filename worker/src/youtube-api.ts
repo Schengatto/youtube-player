@@ -33,6 +33,9 @@ interface YTVideoItem {
     likeCount?: string;
     commentCount?: string;
   };
+  contentDetails?: {
+    duration: string;
+  };
 }
 
 interface YTPlaylistItem {
@@ -92,12 +95,38 @@ function mapVideoItem(item: YTVideoItem): Video {
     channel: item.snippet.channelTitle,
     channelId: item.snippet.channelId,
     publishedAt: item.snippet.publishedAt,
+    duration: item.contentDetails?.duration,
   };
 }
 
 async function ytFetch(path: string, apiKey: string): Promise<Response> {
   const sep = path.includes('?') ? '&' : '?';
   return fetch(`${YOUTUBE_API_BASE}${path}${sep}key=${apiKey}`);
+}
+
+async function fetchDurations(apiKey: string, videoIds: string[]): Promise<Map<string, string>> {
+  if (videoIds.length === 0) return new Map();
+
+  const BATCH_SIZE = 50;
+  const map = new Map<string, string>();
+
+  for (let i = 0; i < videoIds.length; i += BATCH_SIZE) {
+    const batch = videoIds.slice(i, i + BATCH_SIZE);
+    const params = new URLSearchParams({
+      part: 'contentDetails',
+      id: batch.join(','),
+    });
+    const res = await ytFetch(`/videos?${params}`, apiKey);
+    if (!res.ok) continue;
+    const data = await res.json() as { items?: Array<{ id: string; contentDetails?: { duration: string } }> };
+    for (const item of data.items || []) {
+      if (item.contentDetails?.duration) {
+        map.set(item.id, item.contentDetails.duration);
+      }
+    }
+  }
+
+  return map;
 }
 
 export async function searchVideos(apiKey: string, query: string, maxResults: number, pageToken?: string): Promise<SearchResult> {
@@ -117,6 +146,11 @@ export async function searchVideos(apiKey: string, query: string, maxResults: nu
   const videos = (data.items || [])
     .filter(item => item.id.videoId && item.snippet.liveBroadcastContent !== 'live')
     .map(mapSearchItem);
+
+  const durations = await fetchDurations(apiKey, videos.map(v => v.videoId));
+  for (const video of videos) {
+    video.duration = durations.get(video.videoId);
+  }
 
   return { videos, nextPageToken: data.nextPageToken };
 }
@@ -143,12 +177,17 @@ export async function searchByChannel(apiKey: string, channelId: string, maxResu
     .filter(item => item.snippet.resourceId.kind === 'youtube#video' && item.snippet.title !== PRIVATE_VIDEO_TITLE && item.snippet.title !== DELETED_VIDEO_TITLE)
     .map(mapPlaylistItem);
 
+  const durations = await fetchDurations(apiKey, videos.map(v => v.videoId));
+  for (const video of videos) {
+    video.duration = durations.get(video.videoId);
+  }
+
   return { videos, nextPageToken: data.nextPageToken };
 }
 
 export async function getTrending(apiKey: string, regionCode: string, maxResults: number): Promise<SearchResult> {
   const params = new URLSearchParams({
-    part: 'snippet',
+    part: 'snippet,contentDetails',
     chart: 'mostPopular',
     regionCode,
     maxResults: String(maxResults),

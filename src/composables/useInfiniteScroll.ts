@@ -1,8 +1,9 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 
-export const useInfiniteScroll = (callback: () => void | Promise<void>, threshold = 300) => {
+export const useInfiniteScroll = (callback: () => void | Promise<void>, threshold = 300, cooldownMs = 2000) => {
   const isEnabled = ref(true);
   let isFetching = false;
+  let lastCallTime = 0;
 
   const handleScroll = async () => {
     if (!isEnabled.value || isFetching) return;
@@ -12,10 +13,13 @@ export const useInfiniteScroll = (callback: () => void | Promise<void>, threshol
     const clientHeight = document.documentElement.clientHeight;
 
     if (scrollHeight - scrollTop - clientHeight < threshold) {
+      if (Date.now() - lastCallTime < cooldownMs) return;
+
       isFetching = true;
       try {
         await callback();
       } finally {
+        lastCallTime = Date.now();
         isFetching = false;
       }
     }
