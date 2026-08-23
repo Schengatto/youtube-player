@@ -5,7 +5,7 @@ import { useSettings } from '@/composables/useSettings';
 import { useYouTubeAPI } from '@/composables/useYouTubeAPI';
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
 import { useSavedVideos } from '@/composables/useSavedVideos';
-import { extractVideoIdFromUrl, getVideoFromId } from '@/utils/youtube';
+import { extractVideoIdFromUrl, extractVideoIdFromSharedText, getVideoFromId } from '@/utils/youtube';
 import { decodePlaylistFromUrl, getPlaylistShareUrl } from '@/utils/playlist-share';
 import { nextIn, previousIn } from '@/utils/queue';
 import { useI18n } from '@/composables/useI18n';
@@ -378,6 +378,17 @@ export const useAppState = () => {
       }
       window.history.replaceState({}, '', window.location.pathname);
       return;
+    }
+    // Android share target: the shared link arrives as `url`, or inside `text` for apps
+    // that only fill EXTRA_TEXT (the YouTube app being one of them).
+    const sharedParam = urlParams.get('url') ?? urlParams.get('text');
+    if (sharedParam) {
+      const sharedVideoId = extractVideoIdFromSharedText(sharedParam);
+      window.history.replaceState({}, '', window.location.pathname);
+      if (sharedVideoId) {
+        selectedVideo.value = getVideoFromId(sharedVideoId);
+        return;
+      }
     }
     const playlistParam = urlParams.get('playlist');
     if (playlistParam) {

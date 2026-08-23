@@ -1,9 +1,13 @@
+const YOUTUBE_PATH_ID_PATTERN = /^\/(?:shorts|live|embed)\/([^/]+)/;
+const URL_IN_TEXT_PATTERN = /https?:\/\/\S+/g;
+const TRAILING_PUNCTUATION_PATTERN = /[.,;:!?)\]]+$/;
+
 export const parseYouTubeUrl = (url: string): string | null => {
   try {
     const urlObj = new URL(url);
 
     if (urlObj.hostname.includes('youtube.com')) {
-      return urlObj.searchParams.get('v');
+      return urlObj.searchParams.get('v') ?? urlObj.pathname.match(YOUTUBE_PATH_ID_PATTERN)?.[1] ?? null;
     }
 
     if (urlObj.hostname === 'youtu.be') {
@@ -26,6 +30,22 @@ export const extractVideoIdFromUrl = (input: string): string | null => {
   }
 
   return parseYouTubeUrl(trimmed);
+};
+
+/**
+ * Extracts a video id from free-form shared text. The YouTube Android app shares
+ * the link wrapped in a sentence, so the url has to be fished out of the text.
+ */
+export const extractVideoIdFromSharedText = (text: string): string | null => {
+  const direct = extractVideoIdFromUrl(text);
+  if (direct) return direct;
+
+  for (const url of text.match(URL_IN_TEXT_PATTERN) ?? []) {
+    const videoId = parseYouTubeUrl(url.replace(TRAILING_PUNCTUATION_PATTERN, ''));
+    if (videoId) return videoId;
+  }
+
+  return null;
 };
 
 export const getVideoFromId = (videoId: string) => {

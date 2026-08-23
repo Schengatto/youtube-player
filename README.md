@@ -47,6 +47,15 @@ Import your YouTube subscriptions, playlists, and liked videos via Google OAuth.
 
 Share videos and bookmarks via native share (mobile) or clipboard copy. Shared links include rich previews (Open Graph + Twitter Card) for Telegram, WhatsApp, Slack, Discord, and other platforms.
 
+### Share to Tube-Too (Android)
+
+Once installed as a PWA on Android, Tube-Too appears in the system share sheet. Sharing a video
+from the YouTube app (or any app) opens it straight in the player. Watch, Shorts, live and
+`youtu.be` links are all recognised, including when the link is wrapped in a sentence.
+
+Note: this is the share sheet, not the "Open with" chooser. A PWA cannot register itself as a
+handler for `youtube.com` links — Chrome only generates intent filters for the app's own origin.
+
 ### Minimized Player
 
 Minimize the video player to keep browsing while watching. The player stays visible in a corner of the screen.
