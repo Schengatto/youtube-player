@@ -80,6 +80,40 @@ a.settings-item { text-decoration: none; }
 
 .settings-divider { height: 1px; background: var(--white-8); margin: 0.5rem 0; }
 
+.settings-switch {
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--white-8);
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.settings-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.settings-switch.on { background: var(--accent-30); }
+.settings-switch.on::after { transform: translateX(16px); background: var(--accent); }
+
+.settings-hint {
+  margin: 0.25rem 1rem 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-tertiary);
+  opacity: 0.75;
+}
+
 .settings-subpanel {
   position: absolute;
   inset: 0;

@@ -5,15 +5,18 @@ import { useYouTubeAPI } from '@/composables/useYouTubeAPI';
 import { useYTPlayer } from '@/composables/useYTPlayer';
 import { useBookmarks } from '@/composables/useBookmarks';
 import { useI18n } from '@/composables/useI18n';
+import { useSettings } from '@/composables/useSettings';
+import { nextIn, previousIn } from '@/utils/queue';
 import { formatRelativeTime } from '@/utils/date';
 
 const { t } = useI18n();
 const { addBookmark, removeBookmark, getVideoBookmarks, formatTimestamp } = useBookmarks();
+const { userPreferences } = useSettings();
 
 interface Props {
   video: Video | null;
   isMinimized?: boolean;
-  playlist?: Video[];
+  queue?: Video[];
   startTime?: number | null;
 }
 
@@ -41,16 +44,17 @@ function shareUrl(type: 'youtube' | 'app') {
   emit('share', url);
 }
 
+const queue = computed(() => props.queue ?? []);
+const currentVideoId = computed(() => props.video?.videoId ?? null);
 const currentIndex = computed(() => {
-  if (!props.playlist || !props.video) return 0;
-  const idx = props.playlist.findIndex(v => v.videoId === props.video!.videoId);
+  const idx = queue.value.findIndex(v => v.videoId === currentVideoId.value);
   return idx >= 0 ? idx : 0;
 });
-const hasPrevious = computed(() => (props.playlist?.length ?? 0) > 1 && currentIndex.value > 0);
-const hasNext = computed(() => (props.playlist?.length ?? 0) > 1 && currentIndex.value < (props.playlist?.length ?? 0) - 1);
+const hasPrevious = computed(() => previousIn(queue.value, currentVideoId.value) !== null);
+const hasNext = computed(() => nextIn(queue.value, currentVideoId.value) !== null);
 
 const { loadYTApi, createPlayer, destroyPlayer, getCurrentTime, seekTo } = useYTPlayer(
-  () => { if (hasNext.value) emit('play-next'); },
+  () => { if (userPreferences.value.autoplay && hasNext.value) emit('play-next'); },
   () => !!props.video
 );
 
@@ -258,7 +262,7 @@ const formatCount = (count: string): string => {
           </div>
 
           <div v-if="!isMinimized" class="player-main">
-          <div v-if="playlist && playlist.length > 1" class="playlist-nav">
+          <div v-if="queue.length > 1" class="playlist-nav">
             <button @click="emit('play-previous')" :disabled="!hasPrevious" class="nav-btn" :title="t.previousVideo">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -267,7 +271,7 @@ const formatCount = (count: string): string => {
               </svg>
               <span>{{ t.previousVideo }}</span>
             </button>
-            <span class="nav-position">{{ currentIndex + 1 }} / {{ playlist.length }}</span>
+            <span class="nav-position">{{ currentIndex + 1 }} / {{ queue.length }}</span>
             <button @click="emit('play-next')" :disabled="!hasNext" class="nav-btn" :title="t.nextVideo">
               <span>{{ t.nextVideo }}</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"

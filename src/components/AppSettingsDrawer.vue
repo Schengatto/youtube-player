@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useI18n } from '@/composables/useI18n';
+import { useSettings } from '@/composables/useSettings';
 
 interface LocaleOption { code: string; name: string; }
 
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const { userPreferences, setAutoplay } = useSettings();
 const showLanguagePanel = ref(false);
 </script>
 
@@ -48,6 +50,20 @@ const showLanguagePanel = ref(false);
                 </svg>
                 <span>{{ t.interests }}</span>
               </button>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-section">
+              <button class="settings-item" role="switch" :aria-checked="userPreferences.autoplay"
+                @click="setAutoplay(!userPreferences.autoplay)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                </svg>
+                <span>{{ t.autoplay }}</span>
+                <span class="settings-switch" :class="{ on: userPreferences.autoplay }"></span>
+              </button>
+              <p class="settings-hint">{{ t.autoplayHint }}</p>
             </div>
             <div class="settings-divider"></div>
             <div class="settings-section">

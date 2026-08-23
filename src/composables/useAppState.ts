@@ -7,6 +7,7 @@ import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
 import { useSavedVideos } from '@/composables/useSavedVideos';
 import { extractVideoIdFromUrl, getVideoFromId } from '@/utils/youtube';
 import { decodePlaylistFromUrl, getPlaylistShareUrl } from '@/utils/playlist-share';
+import { nextIn, previousIn } from '@/utils/queue';
 import { useI18n } from '@/composables/useI18n';
 import { usePlaylists } from '@/composables/usePlaylists';
 import { useBookmarks } from '@/composables/useBookmarks';
@@ -45,11 +46,17 @@ export const useAppState = () => {
   const pendingStartTime = ref<number | null>(null);
   const pendingImportPlaylist = ref<{ name: string; videos: Video[] } | null>(null);
   const activePlaylistVideos = ref<Video[]>([]);
-  const activePlaylistIndex = ref(0);
+  const playbackSource = ref<'none' | 'feed' | 'playlist'>('none');
   const nextPageToken = ref<string | undefined>(undefined);
   const currentChannelId = ref<string | undefined>(undefined);
   const viewMode = ref<'recommended' | 'search' | 'channel'>('recommended');
   const currentOffset = ref(0);
+
+  const playbackQueue = computed<Video[]>(() => {
+    if (playbackSource.value === 'feed') return videos.value;
+    if (playbackSource.value === 'playlist') return activePlaylistVideos.value;
+    return [];
+  });
 
   const hasPreferences = computed(() => userPreferences.value.interests.length > 0);
   const canLoadMore = computed(() => !isLoading.value && !isLoadingMore.value && nextPageToken.value !== undefined);
@@ -72,7 +79,7 @@ export const useAppState = () => {
     selectedVideo.value = video;
     isMinimized.value = false;
     activePlaylistVideos.value = [];
-    activePlaylistIndex.value = 0;
+    playbackSource.value = 'none';
     pendingStartTime.value = startTime;
     requestDocFullscreen();
   };
@@ -170,9 +177,7 @@ export const useAppState = () => {
   const handleLinkSubmit = async (input: string) => {
     const videoId = extractVideoIdFromUrl(input);
     if (!videoId) { await alert(t.value.invalidLink); return; }
-    selectedVideo.value = getVideoFromId(videoId);
-    isMinimized.value = false;
-    requestDocFullscreen();
+    selectVideo(getVideoFromId(videoId));
   };
 
   const handleSharePlaylist = async (playlistId: string) => {
@@ -209,7 +214,7 @@ export const useAppState = () => {
     selectedVideo.value = null;
     isMinimized.value = false;
     activePlaylistVideos.value = [];
-    activePlaylistIndex.value = 0;
+    playbackSource.value = 'none';
   };
 
   const handleMinimize = () => {
@@ -224,6 +229,7 @@ export const useAppState = () => {
 
   const handlePlayVideo = (video: Video) => {
     selectVideo(video);
+    playbackSource.value = 'feed';
   };
 
   const handleSelectSavedVideo = (video: Video) => {
@@ -265,7 +271,7 @@ export const useAppState = () => {
     selectVideo(video);
     if (playlistVideos && playlistVideos.length > 1) {
       activePlaylistVideos.value = playlistVideos;
-      activePlaylistIndex.value = playlistVideos.findIndex(v => v.videoId === video.videoId);
+      playbackSource.value = 'playlist';
     }
   };
 
@@ -282,17 +288,13 @@ export const useAppState = () => {
   };
 
   const handlePlayNext = () => {
-    if (activePlaylistIndex.value < activePlaylistVideos.value.length - 1) {
-      activePlaylistIndex.value++;
-      selectedVideo.value = activePlaylistVideos.value[activePlaylistIndex.value] ?? null;
-    }
+    const next = nextIn(playbackQueue.value, selectedVideo.value?.videoId ?? null);
+    if (next) selectedVideo.value = next;
   };
 
   const handlePlayPrevious = () => {
-    if (activePlaylistIndex.value > 0) {
-      activePlaylistIndex.value--;
-      selectedVideo.value = activePlaylistVideos.value[activePlaylistIndex.value] ?? null;
-    }
+    const previous = previousIn(playbackQueue.value, selectedVideo.value?.videoId ?? null);
+    if (previous) selectedVideo.value = previous;
   };
 
   const handleSelectBookmark = (bookmark: { videoId: string; timestamp: number; videoTitle: string; channel: string; thumbnail: string }) => {
@@ -385,7 +387,7 @@ export const useAppState = () => {
         if (decoded.videos.length > 0) {
           selectedVideo.value = decoded.videos[0] ?? null;
           activePlaylistVideos.value = decoded.videos;
-          activePlaylistIndex.value = 0;
+          playbackSource.value = 'playlist';
         }
       }
       window.history.replaceState({}, '', window.location.pathname);
@@ -402,7 +404,7 @@ export const useAppState = () => {
     showPreferencesModal, showShareToast,
     showPlaylistsPanel, showBookmarksPanel, showAddToPlaylist, selectedVideoForPlaylist,
     searchQuery, videos, selectedVideo, isMinimized, isLoading, isLoadingMore,
-    activePlaylistVideos,
+    playbackQueue,
     hasPreferences,
     loadRecommendedVideos, handleSearch, handleChannelSearch,
     toggleChannelSave, handleLinkSubmit, handleShare,

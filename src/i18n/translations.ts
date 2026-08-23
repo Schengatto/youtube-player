@@ -73,6 +73,8 @@ type TranslationKeys = {
   interestsLabel: string;
   interestsPlaceholder: string;
   interestsHint: string;
+  autoplay: string;
+  autoplayHint: string;
   saveInterests: string;
   skip: string;
   favoriteChannels: string;
@@ -200,6 +202,8 @@ const it: TranslationKeys = {
   interestsLabel: 'I tuoi interessi (separati da virgola):',
   interestsPlaceholder: 'Es: tecnologia, musica, gaming, cucina...',
   interestsHint: 'Questi interessi saranno usati per mostrarti video personalizzati all\'avvio',
+  autoplay: 'Riproduzione automatica',
+  autoplayHint: 'A fine video parte automaticamente il successivo della lista o della playlist',
   saveInterests: 'Salva interessi',
   skip: 'Salta',
   favoriteChannels: 'I tuoi canali preferiti',
@@ -326,6 +330,8 @@ const en: TranslationKeys = {
   interestsLabel: 'Your interests (comma-separated):',
   interestsPlaceholder: 'E.g.: technology, music, gaming, cooking...',
   interestsHint: 'These interests will be used to show you personalized videos at startup',
+  autoplay: 'Autoplay',
+  autoplayHint: 'When a video ends, the next one in the list or playlist starts automatically',
   saveInterests: 'Save interests',
   skip: 'Skip',
   favoriteChannels: 'Your favorite channels',
@@ -452,6 +458,8 @@ const fr: TranslationKeys = {
   interestsLabel: 'Vos centres d\'interet (separes par des virgules) :',
   interestsPlaceholder: 'Ex : technologie, musique, jeux, cuisine...',
   interestsHint: 'Ces centres d\'interet seront utilises pour vous montrer des videos personnalisees au demarrage',
+  autoplay: 'Lecture automatique',
+  autoplayHint: 'Quand une video se termine, la suivante de la liste ou de la playlist demarre automatiquement',
   saveInterests: 'Enregistrer les centres d\'interet',
   skip: 'Passer',
   favoriteChannels: 'Vos chaines preferees',
@@ -579,6 +587,8 @@ const de: TranslationKeys = {
   interestsLabel: 'Deine Interessen (kommagetrennt):',
   interestsPlaceholder: 'z.B.: Technologie, Musik, Gaming, Kochen...',
   interestsHint: 'Diese Interessen werden verwendet, um dir beim Start personalisierte Videos anzuzeigen',
+  autoplay: 'Automatische Wiedergabe',
+  autoplayHint: 'Wenn ein Video endet, startet automatisch das nachste in der Liste oder Playlist',
   saveInterests: 'Interessen speichern',
   skip: 'Uberspringen',
   favoriteChannels: 'Deine Lieblingskanale',
@@ -705,6 +715,8 @@ const es: TranslationKeys = {
   interestsLabel: 'Tus intereses (separados por comas):',
   interestsPlaceholder: 'Ej: tecnologia, musica, gaming, cocina...',
   interestsHint: 'Estos intereses se usaran para mostrarte videos personalizados al inicio',
+  autoplay: 'Reproduccion automatica',
+  autoplayHint: 'Al terminar un video, se reproduce automaticamente el siguiente de la lista o de la playlist',
   saveInterests: 'Guardar intereses',
   skip: 'Omitir',
   favoriteChannels: 'Tus canales favoritos',
@@ -831,6 +843,8 @@ const pt: TranslationKeys = {
   interestsLabel: 'Seus interesses (separados por virgula):',
   interestsPlaceholder: 'Ex: tecnologia, musica, gaming, culinaria...',
   interestsHint: 'Esses interesses serao usados para mostrar videos personalizados ao iniciar',
+  autoplay: 'Reproducao automatica',
+  autoplayHint: 'Quando um video termina, o proximo da lista ou da playlist comeca automaticamente',
   saveInterests: 'Salvar interesses',
   skip: 'Pular',
   favoriteChannels: 'Seus canais favoritos',
@@ -957,6 +971,8 @@ const zh: TranslationKeys = {
   interestsLabel: '你的兴趣（用逗号分隔）：',
   interestsPlaceholder: '例如：科技、音乐、游戏、美食...',
   interestsHint: '这些兴趣将用于在启动时为你展示个性化视频',
+  autoplay: '自动播放',
+  autoplayHint: '视频结束后，自动播放列表或播放列表中的下一个视频',
   saveInterests: '保存兴趣',
   skip: '跳过',
   favoriteChannels: '你收藏的频道',
@@ -1083,6 +1099,8 @@ const ja: TranslationKeys = {
   interestsLabel: 'あなたの興味（カンマ区切り）：',
   interestsPlaceholder: '例：テクノロジー、音楽、ゲーム、料理...',
   interestsHint: 'これらの興味は起動時にパーソナライズされた動画を表示するために使用されます',
+  autoplay: '自動再生',
+  autoplayHint: '動画が終わると、リストまたはプレイリストの次の動画が自動的に再生されます',
   saveInterests: '興味を保存',
   skip: 'スキップ',
   favoriteChannels: 'お気に入りチャンネル',
@@ -1209,6 +1227,8 @@ const hi: TranslationKeys = {
   interestsLabel: 'आपकी रुचियां (अल्पविराम से अलग):',
   interestsPlaceholder: 'उदा: तकनीक, संगीत, गेमिंग, खाना बनाना...',
   interestsHint: 'इन रुचियों का उपयोग स्टार्टअप पर आपको व्यक्तिगत वीडियो दिखाने के लिए किया जाएगा',
+  autoplay: 'ऑटोप्ले',
+  autoplayHint: 'वीडियो समाप्त होने पर, सूची या प्लेलिस्ट का अगला वीडियो अपने आप चलेगा',
   saveInterests: 'रुचियां सहेजें',
   skip: 'छोड़ें',
   favoriteChannels: 'आपके पसंदीदा चैनल',

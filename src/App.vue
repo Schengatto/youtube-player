@@ -31,7 +31,7 @@ const {
   showPreferencesModal, showShareToast,
   showPlaylistsPanel, showBookmarksPanel, showAddToPlaylist, selectedVideoForPlaylist,
   searchQuery, videos, selectedVideo, isMinimized, isLoading, isLoadingMore,
-  activePlaylistVideos,
+  playbackQueue,
   hasPreferences,
   loadRecommendedVideos, handleSearch, handleChannelSearch,
   toggleChannelSave, handleLinkSubmit, handleShare,
@@ -226,7 +226,7 @@ const {
     </div>
 
     <VideoPlayer :video="selectedVideo" :is-minimized="isMinimized"
-      :playlist="activePlaylistVideos" :start-time="pendingStartTime"
+      :queue="playbackQueue" :start-time="pendingStartTime"
       @close="handleCloseVideo" @share="handleShare" @share-bookmark="handleShareBookmark"
       @minimize="handleMinimize" @maximize="handleMaximize"
       @play-next="handlePlayNext" @play-previous="handlePlayPrevious" />

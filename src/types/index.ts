@@ -16,6 +16,7 @@ export interface SavedChannel {
 export interface UserPreferences {
   interests: string[];
   language: string;
+  autoplay: boolean;
 }
 
 export interface VideoDetails {

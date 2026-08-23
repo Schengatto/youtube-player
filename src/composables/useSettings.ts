@@ -6,7 +6,8 @@ import { STORAGE_KEYS } from '@/utils/constants';
 const savedChannels = ref<SavedChannel[]>([]);
 const userPreferences = ref<UserPreferences>({
   interests: [],
-  language: 'it'
+  language: 'it',
+  autoplay: true
 });
 
 export const useSettings = () => {
@@ -33,15 +34,23 @@ export const useSettings = () => {
 
   const loadPreferences = (): boolean => {
     const prefs = storage.get<UserPreferences>(STORAGE_KEYS.PREFERENCES);
-    if (prefs && prefs.interests && prefs.interests.length > 0) {
-      userPreferences.value = prefs;
+    if (!prefs) return false;
+    const autoplay = prefs.autoplay ?? true;
+    if (prefs.interests && prefs.interests.length > 0) {
+      userPreferences.value = { ...prefs, autoplay };
       return true;
     }
+    userPreferences.value.autoplay = autoplay;
     return false;
   };
 
   const savePreferences = (interests: string[]): void => {
     userPreferences.value.interests = interests;
+    storage.set(STORAGE_KEYS.PREFERENCES, userPreferences.value);
+  };
+
+  const setAutoplay = (enabled: boolean): void => {
+    userPreferences.value.autoplay = enabled;
     storage.set(STORAGE_KEYS.PREFERENCES, userPreferences.value);
   };
 
@@ -57,6 +66,7 @@ export const useSettings = () => {
     removeChannel,
     isChannelSaved,
     loadPreferences,
-    savePreferences
+    savePreferences,
+    setAutoplay
   };
 };

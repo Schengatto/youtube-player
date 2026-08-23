@@ -25,6 +25,12 @@ Save your favorite channels for quick access. Browse their latest uploads withou
 
 Create custom playlists, add/remove/reorder videos, and play them in sequence. Share playlists via URL — recipients can import them with one click.
 
+### Autoplay
+
+When a video ends, the next one starts automatically. Inside a playlist it follows the playlist
+order; opened from the feed, a search or a channel, it follows the list you were browsing — which
+keeps growing as you scroll. Turn it off from settings.
+
 ### Bookmarks
 
 Bookmark specific moments in a video (with timestamp). Jump back to any bookmark later, or share it as a link with `?v=ID&t=seconds`.
