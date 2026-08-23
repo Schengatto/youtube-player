@@ -53,6 +53,25 @@ Available in 9 languages: Italian, English, French, German, Spanish, Portuguese,
 
 Installable as a native app on mobile and desktop. Auto-update notifications when a new version is deployed.
 
+### Background Playback (Android)
+
+Audio keeps playing with the screen off only in **Firefox for Android** with the
+[Video Background Play Fix](https://addons.mozilla.org/firefox/addon/video-background-play-fix/)
+add-on installed. Install the add-on, open the app in Firefox, start a video, and lock the screen.
+
+This is a browser-side setting, not an app feature — there is nothing to enable in Tube-Too.
+
+**What does not work, and why:** the YouTube embedded player pauses itself when the page becomes
+hidden (Page Visibility API), and the media session is torn down a moment later. In Chrome for
+Android the media notification appears for about a second after locking the screen and then
+disappears. The app cannot override this: the video runs inside a cross-origin YouTube iframe, so
+the `<video>` element is not reachable, and the Media Session API cannot grant background playback
+on its own — it only decorates a notification for media the system already allows to play. The
+Firefox add-on works because it neutralises the visibility signal the embed reacts to.
+
+On iOS there is no equivalent: Safari suspends iframe media on screen lock. Official background
+playback is a YouTube Premium feature.
+
 ## Tech Stack
 
 | Layer | Technology |
