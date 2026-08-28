@@ -34,6 +34,7 @@ const {
   playbackQueue,
   hasPreferences,
   loadRecommendedVideos, handleSearch, handleChannelSearch,
+  homeTab, setHomeTab, loadFavoriteWeek, favoritesError, viewMode,
   toggleChannelSave, handleLinkSubmit, handleShare,
   handleSavePreferences,
   handleCloseVideo, handleMinimize, handleMaximize, handlePlayVideo, handleSelectSavedVideo,
@@ -180,6 +181,18 @@ const {
       @import-youtube="handleStartYouTubeImport"
     />
 
+    <div v-if="viewMode === 'recommended' || viewMode === 'favorites'" class="home-tabs">
+      <button :class="['home-tab', { active: homeTab === 'recommended' }]" :disabled="isLoading"
+        @click="setHomeTab('recommended')">
+        {{ t.recommendedVideos }}
+      </button>
+      <button :class="['home-tab', { active: homeTab === 'favorites' }]" :disabled="isLoading"
+        @click="setHomeTab('favorites')">
+        {{ t.favoritesWeek }}
+        <span v-if="savedChannels.length > 0" class="badge">{{ savedChannels.length }}</span>
+      </button>
+    </div>
+
     <div v-if="isLoading && videos.length === 0" class="loading-state">
       <div class="loader"></div>
       <p>{{ t.loadingVideos }}</p>
@@ -187,9 +200,11 @@ const {
 
     <div v-if="videos.length > 0" class="videos-container">
       <div class="highlights-title">
-        <h2 v-if="!searchQuery" class="section-title">{{ t.recommendedVideos }}</h2>
-        <button v-if="videos.length > 0" @click="loadRecommendedVideos" class="refresh-btn" :disabled="isLoading"
-          :title="t.refreshRecommended">
+        <h2 v-if="!searchQuery" class="section-title">
+          {{ homeTab === 'favorites' ? t.favoritesWeekTitle : t.recommendedVideos }}
+        </h2>
+        <button v-if="videos.length > 0" @click="homeTab === 'favorites' ? loadFavoriteWeek() : loadRecommendedVideos()"
+          class="refresh-btn" :disabled="isLoading" :title="t.refreshRecommended">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
@@ -212,7 +227,17 @@ const {
       </div>
     </div>
 
-    <div v-if="!isLoading && videos.length === 0" class="empty-state">
+    <div v-if="!isLoading && videos.length === 0 && viewMode === 'favorites'" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+        <polyline points="17 2 12 7 7 2"></polyline>
+      </svg>
+      <h2>{{ favoritesError ? t.favoritesWeekError : t.favoritesWeekEmpty }}</h2>
+      <p>{{ savedChannels.length === 0 ? t.favoritesWeekNoChannels : t.favoritesWeekEmptyDesc }}</p>
+    </div>
+
+    <div v-else-if="!isLoading && videos.length === 0" class="empty-state">
       <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="23 7 16 12 23 17 23 7"></polygon>

@@ -8,10 +8,11 @@ import { useI18n } from '@/composables/useI18n';
 import { useSettings } from '@/composables/useSettings';
 import { nextIn, previousIn } from '@/utils/queue';
 import { formatRelativeTime } from '@/utils/date';
+import { getChannelUrl, getChannelSubscribeUrl } from '@/utils/youtube';
 
 const { t } = useI18n();
 const { addBookmark, removeBookmark, getVideoBookmarks, formatTimestamp } = useBookmarks();
-const { userPreferences } = useSettings();
+const { userPreferences, isChannelSaved, saveChannel, removeChannel } = useSettings();
 
 interface Props {
   video: Video | null;
@@ -42,6 +43,13 @@ function shareUrl(type: 'youtube' | 'app') {
     : `${window.location.origin}${window.location.pathname}?v=${videoId}`;
   showShareMenu.value = false;
   emit('share', url);
+}
+
+function toggleFollowChannel() {
+  const channelId = props.video?.channelId;
+  if (!channelId) return;
+  if (isChannelSaved(channelId)) removeChannel(channelId);
+  else saveChannel(props.video?.channel || channelId, channelId);
 }
 
 const queue = computed(() => props.queue ?? []);
@@ -288,7 +296,20 @@ const formatCount = (count: string): string => {
               <span>{{ t.loadingDescription }}</span>
             </div>
             <div v-else-if="details" class="description-content">
-              <p v-if="video.channel" class="channel-name">{{ video.channel }}</p>
+              <div v-if="video.channel" class="channel-row">
+                <a v-if="video.channelId" :href="getChannelUrl(video.channelId)" target="_blank" rel="noopener"
+                  class="channel-name channel-link" :title="t.openChannelOnYouTube">{{ video.channel }}</a>
+                <span v-else class="channel-name">{{ video.channel }}</span>
+
+                <div v-if="video.channelId" class="channel-actions">
+                  <button class="channel-action" :class="{ following: isChannelSaved(video.channelId) }"
+                    @click="toggleFollowChannel">
+                    {{ isChannelSaved(video.channelId) ? t.following : t.follow }}
+                  </button>
+                  <a :href="getChannelSubscribeUrl(video.channelId)" target="_blank" rel="noopener"
+                    class="channel-action subscribe">{{ t.subscribeOnYouTube }}</a>
+                </div>
+              </div>
               <p v-if="video.publishedAt" class="publish-date">{{ t.publishedAgo }} {{ formatRelativeTime(video.publishedAt) }}</p>
               <div class="description-text" :class="{ expanded: showDescription }">
                 <pre>{{ details.description || t.noDescription }}</pre>

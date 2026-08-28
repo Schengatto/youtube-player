@@ -13,7 +13,10 @@ import { usePlaylists } from '@/composables/usePlaylists';
 import { useBookmarks } from '@/composables/useBookmarks';
 import { useYouTubeImport } from '@/composables/useYouTubeImport';
 import { useDialog } from '@/composables/useDialog';
-import { MOBILE_BREAKPOINT, PAGE_SIZE, TOAST_DURATION_MS, PAGINATION_HAS_MORE } from '@/utils/constants';
+import { MOBILE_BREAKPOINT, PAGE_SIZE, TOAST_DURATION_MS, PAGINATION_HAS_MORE, STORAGE_KEYS, FAVORITES_FEED_DAYS } from '@/utils/constants';
+import { storage } from '@/utils/storage';
+
+type HomeTab = 'recommended' | 'favorites';
 
 export const useAppState = () => {
   const { savedChannels, userPreferences, loadChannels,
@@ -49,8 +52,10 @@ export const useAppState = () => {
   const playbackSource = ref<'none' | 'feed' | 'playlist'>('none');
   const nextPageToken = ref<string | undefined>(undefined);
   const currentChannelId = ref<string | undefined>(undefined);
-  const viewMode = ref<'recommended' | 'search' | 'channel'>('recommended');
+  const viewMode = ref<'recommended' | 'search' | 'channel' | 'favorites'>('recommended');
   const currentOffset = ref(0);
+  const homeTab = ref<HomeTab>(storage.get<HomeTab>(STORAGE_KEYS.HOME_TAB) === 'favorites' ? 'favorites' : 'recommended');
+  const favoritesError = ref(false);
 
   const playbackQueue = computed<Video[]>(() => {
     if (playbackSource.value === 'feed') return videos.value;
@@ -102,6 +107,36 @@ export const useAppState = () => {
     } finally {
       isLoading.value = false;
     }
+  };
+
+  const loadFavoriteWeek = async () => {
+    searchQuery.value = '';
+    isLoading.value = true;
+    favoritesError.value = false;
+    nextPageToken.value = undefined;
+    currentChannelId.value = undefined;
+    currentOffset.value = 0;
+    viewMode.value = 'favorites';
+    try {
+      const api = useYouTubeAPI();
+      videos.value = await api.getRecentFromChannels(
+        savedChannels.value.map(ch => ch.id),
+        FAVORITES_FEED_DAYS,
+      );
+    } catch (error) {
+      console.error('Error loading favorite channels feed:', error);
+      videos.value = [];
+      favoritesError.value = true;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const setHomeTab = async (tab: HomeTab) => {
+    homeTab.value = tab;
+    storage.set(STORAGE_KEYS.HOME_TAB, tab);
+    if (tab === 'favorites') await loadFavoriteWeek();
+    else await loadRecommendedVideos();
   };
 
   const appendNewVideos = (newVideos: Video[]) => {
@@ -403,6 +438,11 @@ export const useAppState = () => {
       }
       window.history.replaceState({}, '', window.location.pathname);
     }
+    if (homeTab.value === 'favorites' && savedChannels.value.length > 0) {
+      await loadFavoriteWeek();
+      return;
+    }
+    homeTab.value = 'recommended';
     if (hasPrefs) await loadRecommendedVideos();
   });
 
@@ -418,6 +458,7 @@ export const useAppState = () => {
     playbackQueue,
     hasPreferences,
     loadRecommendedVideos, handleSearch, handleChannelSearch,
+    homeTab, setHomeTab, loadFavoriteWeek, favoritesError, viewMode,
     toggleChannelSave, handleLinkSubmit, handleShare,
     handleSavePreferences,
     handleCloseVideo, handleMinimize, handleMaximize, handlePlayVideo, handleSelectSavedVideo,

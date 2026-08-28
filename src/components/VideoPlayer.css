@@ -334,6 +334,39 @@
 
 .description-content { line-height: 1.5; }
 .channel-name { font-weight: 600; color: var(--text-primary); margin: 0 0 0.25rem 0; font-size: 0.95rem; }
+
+.channel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.channel-link { text-decoration: none; }
+.channel-link:hover { color: var(--accent-light); text-decoration: underline; }
+
+.channel-actions { display: flex; gap: 0.5rem; }
+
+.channel-action {
+  background: var(--white-10);
+  border: 1px solid var(--white-15);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.channel-action:hover { background: var(--white-20); border-color: var(--white-25); }
+.channel-action.following { background: var(--accent-20); border-color: var(--accent-50); color: var(--accent-light); }
+.channel-action.subscribe { background: var(--danger-15); border-color: var(--danger-50); color: var(--text-primary); }
+.channel-action.subscribe:hover { background: var(--danger-85); }
 .publish-date { color: var(--text-subtle); font-size: 0.8rem; margin: 0 0 0.75rem 0; }
 
 .description-text {

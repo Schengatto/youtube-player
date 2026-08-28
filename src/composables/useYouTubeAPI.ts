@@ -1,6 +1,6 @@
 import type { Video, VideoDetails, VideoComment } from '@/types';
 import { INTEREST_CONFIG } from '@/utils/youtube-categories';
-import { PAGE_SIZE, RECOMMENDATION_BUFFER } from '@/utils/constants';
+import { PAGE_SIZE, RECOMMENDATION_BUFFER, FAVORITES_FEED_DAYS } from '@/utils/constants';
 
 const API_BASE = import.meta.env.VITE_API_PROXY_URL as string || 'http://localhost:8787';
 
@@ -57,6 +57,20 @@ export const useYouTubeAPI = () => {
       videos: data.videos || [],
       nextPageToken: data.nextPageToken,
     };
+  };
+
+  const getRecentFromChannels = async (channelIds: string[], days = FAVORITES_FEED_DAYS): Promise<Video[]> => {
+    if (channelIds.length === 0) return [];
+
+    const params = new URLSearchParams({
+      ids: channelIds.join(','),
+      days: String(days),
+    });
+
+    const response = await fetchApi(`/channels/recent?${params}`);
+    const data: ProxySearchResponse = await response.json();
+
+    return data.videos || [];
   };
 
   const getMostPopular = async (
@@ -174,6 +188,7 @@ export const useYouTubeAPI = () => {
   return {
     searchVideos,
     searchByChannel,
+    getRecentFromChannels,
     getMostPopular,
     getRecommendedPopular,
     getVideoDetails,

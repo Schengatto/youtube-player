@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseYouTubeUrl, extractVideoIdFromUrl, extractVideoIdFromSharedText } from './youtube';
+import { parseYouTubeUrl, extractVideoIdFromUrl, extractVideoIdFromSharedText, getChannelUrl, getChannelSubscribeUrl } from './youtube';
 
 describe('parseYouTubeUrl', () => {
   it('reads the v param from a watch url', () => {
@@ -83,5 +83,19 @@ describe('extractVideoIdFromSharedText', () => {
 
   it('returns null for empty text', () => {
     expect(extractVideoIdFromSharedText('')).toBeNull();
+  });
+});
+
+describe('getChannelUrl', () => {
+  it('builds the channel page url', () => {
+    expect(getChannelUrl('UCuAXFkgsw1L7xaCfnd5JJOw'))
+      .toBe('https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw');
+  });
+});
+
+describe('getChannelSubscribeUrl', () => {
+  it('adds the subscribe confirmation param', () => {
+    expect(getChannelSubscribeUrl('UCuAXFkgsw1L7xaCfnd5JJOw'))
+      .toBe('https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw?sub_confirmation=1');
   });
 });

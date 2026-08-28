@@ -18,6 +18,7 @@ export const STORAGE_KEYS = {
   PLAYLISTS: 'user_playlists',
   SAVED_VIDEOS: 'savedVideos',
   LOCALE: 'app_locale',
+  HOME_TAB: 'home_tab',
 } as const;
 
 export const MOBILE_BREAKPOINT = 768;
@@ -33,4 +34,5 @@ export const TOAST_DURATION_MS = 3000;
 export const POPUP_CHECK_INTERVAL_MS = 500;
 export const YOUTUBE_VIDEO_ID_LENGTH = 11;
 export const PAGINATION_HAS_MORE = 'has-more';
+export const FAVORITES_FEED_DAYS = 7;
 export const RECOMMENDATION_BUFFER = 20;

@@ -48,6 +48,17 @@ export const extractVideoIdFromSharedText = (text: string): string | null => {
   return null;
 };
 
+export const getChannelUrl = (channelId: string): string =>
+  `https://www.youtube.com/channel/${channelId}`;
+
+/**
+ * YouTube opens its own subscribe confirmation dialog for this url. The app has no
+ * write access to the user's YouTube account (the OAuth scope is read-only), so
+ * subscribing has to happen on YouTube itself.
+ */
+export const getChannelSubscribeUrl = (channelId: string): string =>
+  `${getChannelUrl(channelId)}?sub_confirmation=1`;
+
 export const getVideoFromId = (videoId: string) => {
   return {
     title: 'Video YouTube',
