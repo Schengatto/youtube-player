@@ -1,6 +1,7 @@
 import type { Video, VideoDetails, VideoComment } from '@/types';
 import { INTEREST_CONFIG } from '@/utils/youtube-categories';
 import { PAGE_SIZE, RECOMMENDATION_BUFFER, FAVORITES_FEED_DAYS } from '@/utils/constants';
+import { chunkChannels, mergeRecentVideos } from '@/utils/feed';
 
 const API_BASE = import.meta.env.VITE_API_PROXY_URL as string || 'http://localhost:8787';
 
@@ -62,15 +63,28 @@ export const useYouTubeAPI = () => {
   const getRecentFromChannels = async (channelIds: string[], days = FAVORITES_FEED_DAYS): Promise<Video[]> => {
     if (channelIds.length === 0) return [];
 
-    const params = new URLSearchParams({
-      ids: channelIds.join(','),
-      days: String(days),
-    });
+    const fetchChunk = async (ids: string[]): Promise<Video[]> => {
+      const params = new URLSearchParams({ ids: ids.join(','), days: String(days) });
+      const response = await fetchApi(`/channels/recent?${params}`);
+      const data: ProxySearchResponse = await response.json();
 
-    const response = await fetchApi(`/channels/recent?${params}`);
-    const data: ProxySearchResponse = await response.json();
+      return data.videos || [];
+    };
 
-    return data.videos || [];
+    // The worker cannot fan out over every channel in one invocation, so the list is
+    // split. A partial feed still beats no feed, but if every chunk fails, so does this.
+    const results = await Promise.allSettled(chunkChannels(channelIds).map(fetchChunk));
+    const loaded = results.filter(result => result.status === 'fulfilled');
+
+    if (loaded.length === 0) {
+      throw (results[0] as PromiseRejectedResult).reason;
+    }
+
+    for (const failed of results.filter(result => result.status === 'rejected')) {
+      console.error('Favorite channels feed: a chunk failed', failed.reason);
+    }
+
+    return mergeRecentVideos(loaded.map(result => result.value));
   };
 
   const getMostPopular = async (

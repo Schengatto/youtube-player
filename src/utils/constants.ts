@@ -35,4 +35,12 @@ export const POPUP_CHECK_INTERVAL_MS = 500;
 export const YOUTUBE_VIDEO_ID_LENGTH = 11;
 export const PAGINATION_HAS_MORE = 'has-more';
 export const FAVORITES_FEED_DAYS = 7;
+
+/**
+ * A Cloudflare Worker invocation may issue at most 50 subrequests, and the feed spends
+ * one per channel (two when a channel falls back), so the channel list is requested in
+ * chunks instead of all at once.
+ */
+export const FAVORITES_FEED_CHUNK_SIZE = 20;
+export const FAVORITES_FEED_MAX_VIDEOS = 60;
 export const RECOMMENDATION_BUFFER = 20;
