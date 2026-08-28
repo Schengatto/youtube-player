@@ -24,6 +24,8 @@ export interface VideoDetails {
   viewCount: string;
   likeCount: string;
   commentCount: string;
+  /** YouTube category, '10' being Music. Absent when the details came from the fallback path. */
+  categoryId?: string;
 }
 
 export interface VideoComment {

@@ -9,6 +9,7 @@ import { useSettings } from '@/composables/useSettings';
 import { nextIn, previousIn } from '@/utils/queue';
 import { formatRelativeTime } from '@/utils/date';
 import { getChannelUrl, getChannelSubscribeUrl } from '@/utils/youtube';
+import { musicSeed, type TrackSeed } from '@/utils/music';
 
 const { t } = useI18n();
 const { addBookmark, removeBookmark, getVideoBookmarks, formatTimestamp } = useBookmarks();
@@ -19,6 +20,7 @@ interface Props {
   isMinimized?: boolean;
   queue?: Video[];
   startTime?: number | null;
+  radioLoading?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -31,6 +33,7 @@ const emit = defineEmits<{
   'play-next': [];
   'play-previous': [];
   'share-bookmark': [url: string];
+  'radio-requested': [seed: TrackSeed];
 }>();
 
 const showShareMenu = ref(false);
@@ -84,6 +87,15 @@ const videoBookmarks = computed(() => {
   if (!props.video) return [];
   return getVideoBookmarks(props.video.videoId);
 });
+
+/** Non-null only for videos we can name as a song, which is what gates the radio button. */
+const radioSeed = computed(() => musicSeed(props.video, details.value));
+
+const requestRadio = () => {
+  if (props.radioLoading) return;
+  const seed = radioSeed.value;
+  if (seed) emit('radio-requested', seed);
+};
 
 const handleAddBookmark = () => {
   if (!props.video) return;
@@ -309,6 +321,11 @@ const formatCount = (count: string): string => {
                   <a :href="getChannelSubscribeUrl(video.channelId)" target="_blank" rel="noopener"
                     class="channel-action subscribe">{{ t.subscribeOnYouTube }}</a>
                 </div>
+
+                <button v-if="radioSeed" data-test="radio-btn" class="channel-action radio"
+                  :disabled="radioLoading" @click="requestRadio">
+                  {{ radioLoading ? t.loadingSimilar : t.similarTracks }}
+                </button>
               </div>
               <p v-if="video.publishedAt" class="publish-date">{{ t.publishedAgo }} {{ formatRelativeTime(video.publishedAt) }}</p>
               <div class="description-text" :class="{ expanded: showDescription }">

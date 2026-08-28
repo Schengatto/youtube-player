@@ -367,6 +367,7 @@
 .channel-action.following { background: var(--accent-20); border-color: var(--accent-50); color: var(--accent-light); }
 .channel-action.subscribe { background: var(--danger-15); border-color: var(--danger-50); color: var(--text-primary); }
 .channel-action.subscribe:hover { background: var(--danger-85); }
+.channel-action:disabled { opacity: 0.6; cursor: default; }
 .publish-date { color: var(--text-subtle); font-size: 0.8rem; margin: 0 0 0.75rem 0; }
 
 .description-text {

@@ -1,4 +1,5 @@
 import type { Video, VideoDetails, VideoComment } from '@/types';
+import type { TrackSeed } from '@/utils/music';
 import { INTEREST_CONFIG } from '@/utils/youtube-categories';
 import { PAGE_SIZE, RECOMMENDATION_BUFFER, FAVORITES_FEED_DAYS } from '@/utils/constants';
 import { chunkChannels, mergeRecentVideos } from '@/utils/feed';
@@ -18,6 +19,13 @@ interface ProxySearchResponse {
 interface ProxyCommentsResponse {
   comments: VideoComment[];
   nextPageToken?: string;
+}
+
+interface RadioResult {
+  /** The seed as the server resolved it, which is what to show in the UI: it fills in the
+   *  artist when the request went out with the track name alone. */
+  seed: TrackSeed;
+  videos: Video[];
 }
 
 const fetchApi = async (path: string): Promise<Response> => {
@@ -199,6 +207,20 @@ export const useYouTubeAPI = () => {
     }
   };
 
+  const getSimilarTracks = async (seed: TrackSeed, limit?: number): Promise<RadioResult> => {
+    const params = new URLSearchParams({ track: seed.track });
+    if (seed.artist) params.set('artist', seed.artist);
+    if (limit !== undefined) params.set('limit', String(limit));
+
+    const response = await fetchApi(`/radio?${params}`);
+    const data: RadioResult = await response.json();
+
+    return {
+      seed: data.seed ?? seed,
+      videos: data.videos || [],
+    };
+  };
+
   return {
     searchVideos,
     searchByChannel,
@@ -207,5 +229,6 @@ export const useYouTubeAPI = () => {
     getRecommendedPopular,
     getVideoDetails,
     getVideoComments,
+    getSimilarTracks,
   };
 };

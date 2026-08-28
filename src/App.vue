@@ -42,6 +42,7 @@ const {
   handleAddToPlaylist, handleTogglePlaylist, handleCreatePlaylist,
   handleDeletePlaylist, handlePlaylistPlayVideo, handleSharePlaylist,
   handlePlayNext, handlePlayPrevious,
+  startRadio, radioSeed, isLoadingRadio,
   pendingImportPlaylist, handleImportPlaylistSave, handleImportPlaylistWatch,
   bookmarks, handleSelectBookmark, handleShareBookmark, handleShareBookmarkFromPanel,
   handleDeleteBookmark, handleClearAllBookmarks,
@@ -200,7 +201,10 @@ const {
 
     <div v-if="videos.length > 0" class="videos-container">
       <div class="highlights-title">
-        <h2 v-if="!searchQuery" class="section-title">
+        <h2 v-if="viewMode === 'radio' && radioSeed" class="section-title">
+          {{ t.radioTitle }}: {{ radioSeed.artist ? `${radioSeed.artist} - ${radioSeed.track}` : radioSeed.track }}
+        </h2>
+        <h2 v-else-if="!searchQuery" class="section-title">
           {{ homeTab === 'favorites' ? t.favoritesWeekTitle : t.recommendedVideos }}
         </h2>
         <button v-if="videos.length > 0" @click="homeTab === 'favorites' ? loadFavoriteWeek() : loadRecommendedVideos()"
@@ -251,10 +255,11 @@ const {
     </div>
 
     <VideoPlayer :video="selectedVideo" :is-minimized="isMinimized"
-      :queue="playbackQueue" :start-time="pendingStartTime"
+      :queue="playbackQueue" :start-time="pendingStartTime" :radio-loading="isLoadingRadio"
       @close="handleCloseVideo" @share="handleShare" @share-bookmark="handleShareBookmark"
       @minimize="handleMinimize" @maximize="handleMaximize"
-      @play-next="handlePlayNext" @play-previous="handlePlayPrevious" />
+      @play-next="handlePlayNext" @play-previous="handlePlayPrevious"
+      @radio-requested="startRadio" />
 
     <PreferencesModal :show="showPreferencesModal" :current-interests="userPreferences.interests"
       :has-preferences="hasPreferences" @close="showPreferencesModal = false" @save="handleSavePreferences" />

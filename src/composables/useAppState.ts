@@ -1,5 +1,6 @@
 import { ref, computed, onMounted } from 'vue';
 import type { Video } from '@/types';
+import type { TrackSeed } from '@/utils/music';
 import type { Locale } from '@/i18n/translations';
 import { useSettings } from '@/composables/useSettings';
 import { useYouTubeAPI } from '@/composables/useYouTubeAPI';
@@ -52,7 +53,9 @@ export const useAppState = () => {
   const playbackSource = ref<'none' | 'feed' | 'playlist'>('none');
   const nextPageToken = ref<string | undefined>(undefined);
   const currentChannelId = ref<string | undefined>(undefined);
-  const viewMode = ref<'recommended' | 'search' | 'channel' | 'favorites'>('recommended');
+  const viewMode = ref<'recommended' | 'search' | 'channel' | 'favorites' | 'radio'>('recommended');
+  const radioSeed = ref<TrackSeed | null>(null);
+  const isLoadingRadio = ref(false);
   const currentOffset = ref(0);
   const homeTab = ref<HomeTab>(storage.get<HomeTab>(STORAGE_KEYS.HOME_TAB) === 'favorites' ? 'favorites' : 'recommended');
   const favoritesError = ref(false);
@@ -267,6 +270,44 @@ export const useAppState = () => {
     playbackSource.value = 'feed';
   };
 
+  /**
+   * Swaps the on-screen list for a radio of similar tracks and starts the first one.
+   * The list on screen is the playback queue, so replacing it is all the queue needs.
+   * Nothing changes unless the radio came back with something to play.
+   */
+  const startRadio = async (seed: TrackSeed) => {
+    if (isLoadingRadio.value) return;
+    isLoadingRadio.value = true;
+
+    try {
+      const api = useYouTubeAPI();
+      const result = await api.getSimilarTracks(seed);
+      const first = result.videos[0];
+
+      if (!first) {
+        await alert(t.value.noSimilarTracks);
+        return;
+      }
+
+      videos.value = result.videos;
+      radioSeed.value = result.seed;
+      viewMode.value = 'radio';
+      searchQuery.value = '';
+      currentChannelId.value = undefined;
+      currentOffset.value = 0;
+      nextPageToken.value = undefined;
+
+      // selectVideo resets playbackSource, so the queue is set after it.
+      selectVideo(first);
+      playbackSource.value = 'feed';
+    } catch (error) {
+      console.error('Radio error:', error);
+      await alert(t.value.radioError);
+    } finally {
+      isLoadingRadio.value = false;
+    }
+  };
+
   const handleSelectSavedVideo = (video: Video) => {
     showSavedVideos.value = false;
     selectVideo(video);
@@ -466,6 +507,7 @@ export const useAppState = () => {
     handleAddToPlaylist, handleTogglePlaylist, handleCreatePlaylist,
     handleDeletePlaylist, handlePlaylistPlayVideo, handleSharePlaylist,
     handlePlayNext, handlePlayPrevious,
+    startRadio, radioSeed, isLoadingRadio,
     pendingImportPlaylist, handleImportPlaylistSave, handleImportPlaylistWatch,
     bookmarks, handleSelectBookmark, handleShareBookmark, handleShareBookmarkFromPanel,
     handleDeleteBookmark, handleClearAllBookmarks,
