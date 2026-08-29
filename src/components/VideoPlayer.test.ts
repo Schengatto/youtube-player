@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import type { Video, VideoDetails } from '@/types';
 import { useSettings } from '@/composables/useSettings';
+import type { TranscriptResponse } from '@/composables/useYouTubeAPI';
 import VideoPlayer from './VideoPlayer.vue';
 
 let onVideoEnd: () => void;
@@ -23,12 +24,13 @@ vi.mock('@/composables/useYTPlayer', () => ({
 
 let videoDetails: VideoDetails | null = null;
 let transcriptResponses: unknown[] = [];
+const getTranscriptMock = vi.fn(() => Promise.resolve(transcriptResponses.shift() ?? { status: 'ok', segments: [] }));
 
 vi.mock('@/composables/useYouTubeAPI', () => ({
   useYouTubeAPI: () => ({
     getVideoDetails: () => Promise.resolve(videoDetails),
     getVideoComments: () => Promise.resolve({ comments: [], nextPageToken: undefined }),
-    getTranscript: () => Promise.resolve(transcriptResponses.shift() ?? { status: 'ok', segments: [] })
+    getTranscript: getTranscriptMock
   })
 }));
 
@@ -248,6 +250,7 @@ describe('transcript tab', () => {
     currentTime = 0;
     transcriptResponses = [];
     seeked = [];
+    getTranscriptMock.mockClear();
   });
 
   it('does not ask for the transcript until the tab is opened', async () => {
@@ -256,6 +259,7 @@ describe('transcript tab', () => {
     await flushPromises();
 
     expect(wrapper.find('.transcript-panel').exists()).toBe(false);
+    expect(getTranscriptMock).not.toHaveBeenCalled();
   });
 
   it('shows the lines once the tab is opened', async () => {
@@ -314,6 +318,32 @@ describe('transcript tab', () => {
     vi.useRealTimers();
   });
 
+  it('discards a pending retry if the video changes before the in-flight response arrives', async () => {
+    vi.useFakeTimers();
+    let resolvePending!: (value: TranscriptResponse) => void;
+    const pendingResponse = new Promise<TranscriptResponse>(resolve => { resolvePending = resolve; });
+    getTranscriptMock.mockImplementationOnce(() => pendingResponse);
+
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    // The video changes while the very first getTranscript call is still in flight, before
+    // it has resolved into a 'pending' state and before any retry timer exists to cancel.
+    await wrapper.setProps({ video: video('b') });
+    await flushPromises();
+
+    resolvePending({ status: 'pending', retryAfter: 1 });
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(20000);
+    await flushPromises();
+
+    // If the stale continuation were allowed to schedule its own retry, it would have kept
+    // calling getTranscript for video b even though nobody opened its transcript tab.
+    expect(getTranscriptMock).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
   it('seeks the player when a line is clicked', async () => {
     transcriptResponses = [{ status: 'ok', segments: [{ start: 42, dur: 1, text: 'ciao' }] }];
     const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
@@ -326,7 +356,10 @@ describe('transcript tab', () => {
   });
 
   it('goes back to the comments and forgets the transcript on a new video', async () => {
-    transcriptResponses = [{ status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] }];
+    transcriptResponses = [
+      { status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] },
+      { status: 'ok', segments: [{ start: 0, dur: 1, text: 'hello' }] },
+    ];
     const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
     await flushPromises();
     await openTranscript(wrapper);
@@ -335,6 +368,13 @@ describe('transcript tab', () => {
     await flushPromises();
 
     expect(wrapper.find('.transcript-panel').exists()).toBe(false);
+
+    // Reopening the tab on the new video must not still show the previous video's lines:
+    // proves the transcript state was actually cleared, not just the active tab.
+    await openTranscript(wrapper);
+
+    expect(wrapper.text()).not.toContain('ciao');
+    expect(wrapper.findAll('.transcript-line')).toHaveLength(1);
   });
 
   it('stops the highlight interval when the tab is left, leaving no leaked timer', async () => {

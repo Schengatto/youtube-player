@@ -145,6 +145,12 @@ let transcriptLoaded = false;
 let transcriptRetries = 0;
 let transcriptTimer: ReturnType<typeof setTimeout> | null = null;
 let highlightTimer: ReturnType<typeof setInterval> | null = null;
+/**
+ * Bumped on every video change so a `loadTranscript` call still in flight (or a retry it was
+ * about to schedule) can tell, after its `await`, that it no longer belongs to the current
+ * video and must not write state or schedule a timer for it.
+ */
+let transcriptGeneration = 0;
 
 const stopHighlight = () => {
   if (highlightTimer) { clearInterval(highlightTimer); highlightTimer = null; }
@@ -163,8 +169,13 @@ const startHighlight = () => {
 };
 
 const loadTranscript = async () => {
+  const generation = transcriptGeneration;
   if (!props.video) return;
   const result = await useYouTubeAPI().getTranscript(props.video.videoId);
+  // The video may have changed while this call was in flight: a stale continuation must not
+  // write state for the wrong video, nor schedule a retry that keeps fetching after nobody
+  // opened its tab.
+  if (generation !== transcriptGeneration) return;
 
   if (result.status === 'pending') {
     if (transcriptRetries >= TRANSCRIPT_MAX_RETRIES) {
@@ -223,6 +234,7 @@ watch(() => props.video, async (newVideo) => {
   transcriptTime.value = 0;
   transcriptLoaded = false;
   transcriptRetries = 0;
+  transcriptGeneration += 1;
 
   if (newVideo) {
     await loadYTApi();
