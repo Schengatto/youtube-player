@@ -43,9 +43,11 @@ limite.
   addebito, è l'assenza di uno strumento con cui addebitare.
 - Fornitori con crediti gratuiti **una tantum**, seguiti da pagamento a
   consumo, sono esclusi anche quando costano meno a volume.
-- Il tetto è di circa **100 video nuovi al mese**, non 100
-  visualizzazioni: grazie alla cache permanente un video già aperto una
-  volta, da chiunque, resta gratuito per sempre e per tutti.
+- Il tetto è di circa **100 video nuovi al mese per chiave configurata**,
+  non 100 visualizzazioni: grazie alla cache permanente un video già
+  aperto una volta, da chiunque, resta gratuito per sempre e per tutti.
+  Sul numero di chiavi vedi la sezione "Chiavi multiple", inclusa la nota
+  di rischio.
 - **Nessun contatore di budget lato worker.** Sarebbe stato uno stato in
   più da mantenere e da azzerare ogni mese senza aggiungere alcuna
   protezione: senza carta registrata l'addebito è impossibile, e
@@ -78,23 +80,83 @@ locale, con funzioni pure e senza costi aggiuntivi.
 
 ## 1. Worker — `GET /transcript` (repo privato, qui solo il contratto)
 
+Il contratto del provider è stato verificato sulla sua documentazione il
+2026-08-29 e **differisce** da quello ipotizzato in prima stesura: unità di
+misura diverse, uno stato dedicato per "nessun transcript" e una modalità
+asincrona per i video lunghi. I dettagli di quel contratto vivono nel repo
+privato del worker. Qui si descrive **solo ciò che vede il frontend**.
+
 ```text
 GET /transcript?videoId=<id>
 → 200 { videoId, lang: string, segments: [{ start: number, dur: number, text: string }] }
+→ 202 { status: 'pending', retryAfter: number }
 ```
 
-- `start` e `dur` in secondi.
+- `start` e `dur` **in secondi**. Il provider li fornisce in millisecondi:
+  la conversione è responsabilità del worker, così il frontend riceve
+  un'unica unità coerente con `seekTo` e con i segnalibri già esistenti.
 - Video senza sottotitoli → `200` con `segments: []`. **Non** è un errore:
-  è uno stato normale che la UI sa mostrare.
-- Crediti mensili del provider esauriti → `429`. Stato distinto da "nessun
-  sottotitolo": il video potrebbe avere un transcript, semplicemente non
-  possiamo recuperarlo adesso. La UI lo dice con parole diverse.
-- `TRANSCRIPT_API_KEY` assente → `503`, come già fa `/radio` con
+  è uno stato normale che la UI sa mostrare. Il provider lo segnala con un
+  codice dedicato, che il worker normalizza in questa forma.
+- **Video lunghi → `202`**. Oltre una certa durata il provider non
+  restituisce il testo ma un identificativo di lavorazione. Vedi la
+  sezione dedicata più sotto.
+- Crediti mensili esauriti su tutte le chiavi → `429`. Stato distinto da
+  "nessun sottotitolo": il video potrebbe avere un transcript, semplicemente
+  non possiamo recuperarlo adesso. La UI lo dice con parole diverse.
+- Nessuna chiave configurata → `503`, come già fa `/radio` con
   `LASTFM_API_KEY`.
 - Lingua: si prende la traccia predefinita del video. Nessun parametro di
   lingua in questa versione (vedi Fuori scope).
-- Costo: **1 subrequest**. Il tetto di 50 per invocazione documentato in
-  `cloudflare-worker-proxy-and-deploy` non è un tema qui.
+- Il worker deve richiedere **esplicitamente i soli sottotitoli già
+  esistenti**, mai la generazione automatica del testo per i video che non
+  ne hanno: quella modalità consuma più crediti ed è incompatibile con il
+  vincolo di costo zero. Va fissata esplicitamente, senza affidarsi al
+  comportamento predefinito del provider.
+- Costo: **1 subrequest** nel caso normale. Il tetto di 50 per invocazione
+  documentato in `cloudflare-worker-proxy-and-deploy` non è un tema qui.
+
+### Video lunghi: lavorazione asincrona
+
+Oltre una certa durata (~20 minuti, quindi **non** un caso limite su un
+player YouTube) il provider risponde con un identificativo di lavorazione
+da interrogare separatamente.
+
+Un Worker non può restare in attesa a interrogarlo: ha limiti di durata e
+nel frattempo la richiesta dell'utente resta appesa. Quindi:
+
+1. Il worker salva l'identificativo in KV con TTL breve (chiave
+   `job:<videoId>`) e risponde `202 { status: 'pending', retryAfter }`.
+2. Il frontend mostra "preparazione in corso" e richiama `/transcript`
+   dopo `retryAfter` secondi.
+3. Alla chiamata successiva il worker trova il lavoro in corso, ne
+   verifica lo stato e restituisce il transcript quando è pronto,
+   scrivendolo in cache come una risposta normale.
+4. Il frontend smette di riprovare dopo un numero massimo di tentativi e
+   mostra l'errore, per non ripetere all'infinito su un lavoro fallito.
+
+I risultati scadono lato provider dopo un'ora: il TTL della chiave `job:`
+deve restare ben sotto quella soglia.
+
+### Chiavi multiple
+
+Secret **`TRANSCRIPT_API_KEYS`**: una o più chiavi separate da virgola. Il
+worker le prova in ordine e passa alla successiva quando una risponde
+"limite superato". Oggi ne contiene **una sola** e il comportamento è
+identico a quello di una chiave singola; aggiungerne una in futuro non
+richiede modifiche al codice né alla configurazione.
+
+Non serve memorizzare quale chiave è esaurita: una chiave scartata costa
+una subrequest sprecata per richiesta, e con un pugno di chiavi si resta
+lontanissimi dal tetto di 50. Uno stato in KV da azzerare ogni mese
+sarebbe complessità senza guadagno.
+
+Il meccanismo è il normale failover fra chiavi (ruotare una chiave
+compromessa senza interruzioni, affiancarne una a pagamento, migrare
+account). **Nota di rischio, decisa consapevolmente dall'utente il
+2026-08-29:** usarlo per sommare più piani gratuiti dello stesso provider
+è con ogni probabilità vietato dai suoi termini, e la conseguenza tipica è
+la chiusura degli account coinvolti, chiave principale inclusa.
 
 ### Cache: KV permanente
 
@@ -108,6 +170,10 @@ solo `caches.default`, che è per-colo e volatile).
   gratis.
 - Risultato vuoto (video senza sottotitoli) cachato con **TTL 7 giorni**,
   non permanente: i sottotitoli possono comparire in seguito.
+- **Mai scrivere in cache** un `429` (crediti esauriti) né un `202`
+  (lavorazione in corso): non sono risposte, sono stati temporanei.
+  Cacharli avvelenerebbe la cache permanente e lascerebbe quel video senza
+  transcript per sempre.
 - È questa cache a rendere sostenibile il piano gratuito del provider. I
   limiti free di KV (1k scritture/giorno, 100k letture/giorno) restano
   lontani.
@@ -144,11 +210,16 @@ export const toPlainText = (segments: TranscriptSegment[]): string
 - Nuovo componente `TranscriptPanel.vue` + `TranscriptPanel.css`:
   `VideoPlayer.vue` è già a 445 righe e assorbire lì anche ricerca,
   polling ed evidenziazione lo renderebbe difficile da tenere in testa.
-  Props: `segments`, `loading`, `currentTime` e `status:
-  'ok' | 'empty' | 'quota' | 'error'`. Uno stato unico e non due booleani
-  separati, perché i quattro casi si escludono a vicenda e ognuno ha un
-  messaggio diverso. Emette `seek` (secondi) e non tocca il player
-  direttamente.
+  Props: `segments`, `currentTime` e `status:
+  'loading' | 'pending' | 'ok' | 'empty' | 'quota' | 'error'`. Uno stato
+  unico e non un insieme di booleani, perché i casi si escludono a vicenda
+  e ognuno ha un messaggio diverso. Emette `seek` (secondi) e non tocca il
+  player direttamente.
+- Stato `pending` (video lungo in lavorazione): messaggio "preparazione in
+  corso" e nuova chiamata dopo `retryAfter` secondi, con un numero massimo
+  di tentativi oltre il quale si passa a `error`. Il timer va fermato al
+  cambio tab, al cambio video e in `onUnmounted`, come quello
+  dell'evidenziazione.
 - Click su una riga → `seekTo(segment.start)`, riusando lo stesso percorso
   già in uso per i segnalibri (`handleSeekToBookmark`).
 - Evidenziazione: `getCurrentTime()` in polling ogni 500ms, **avviato solo
@@ -167,17 +238,31 @@ export const toPlainText = (segments: TranscriptSegment[]): string
 - `429` → messaggio dedicato: il limite mensile gratuito è esaurito, i
   video già aperti in precedenza restano disponibili. Testo diverso dal
   caso precedente, perché la causa e l'attesa sono diverse.
+- `202` ripetuto oltre il numero massimo di tentativi → `error`. Un lavoro
+  che non si conclude non deve tenere il pannello in "caricamento" a tempo
+  indeterminato.
 - Fetch fallito o `503` → messaggio di errore con possibilità di riprovare;
   il resto del player non viene toccato.
 - Clipboard negata dal browser → la conferma non compare, nessun crash.
 
 ## 5. Test
 
-Worker (repo privato): mapping della risposta del provider sul contratto,
-hit e miss di KV, video senza sottotitoli (incluso il TTL breve), crediti
-esauriti → 429, chiave mancante → 503. Il caso "crediti esauriti" verifica
-anche che **non venga scritto nulla in KV**: una risposta vuota per quota
-non deve sporcare la cache e impedire il recupero il mese successivo.
+Worker (repo privato):
+
+- Mapping della risposta del provider sul contratto, **inclusa la
+  conversione millisecondi → secondi**: è la regressione più facile da
+  introdurre e la più silenziosa, perché un fattore 1000 sui timestamp non
+  fa fallire nulla, sposta solo tutte le righe.
+- Hit e miss di KV; video senza sottotitoli, incluso il TTL breve.
+- Crediti esauriti → `429` e chiave mancante → `503`.
+- **Nessuna scrittura in KV** su `429` e su `202`: una risposta vuota o
+  temporanea non deve sporcare la cache permanente e impedire il recupero
+  in seguito.
+- Failover fra chiavi: con due chiavi, la prima esaurita fa usare la
+  seconda; con tutte esaurite si risponde `429`. Da testare anche con una
+  sola chiave, che è la configurazione reale di oggi.
+- Ciclo asincrono: prima chiamata → `202` e identificativo salvato;
+  chiamata successiva con lavoro concluso → `200` e scrittura in cache.
 
 Frontend (questo repo):
 
@@ -185,7 +270,10 @@ Frontend (questo repo):
   bordi: lista vuota, `t` prima del primo segmento, query senza match,
   durate oltre l'ora.
 - Test del pannello: click su una riga emette `seek` col valore giusto,
-  la ricerca filtra, lo stato vuoto non mostra il bottone di copia.
+  la ricerca filtra, lo stato vuoto non mostra il bottone di copia, e i
+  sei stati mostrano ciascuno il proprio messaggio.
+- Ciclo di attesa: da `pending` si riprova e si arriva a `ok`; superato il
+  numero massimo di tentativi si finisce in `error` e il timer si ferma.
 
 ## 6. Deploy
 
@@ -194,8 +282,9 @@ automatico sul push a `main`, quindi invertire l'ordine metterebbe live un
 tab che fallisce.
 
 1. Creare il namespace KV e aggiungere il binding in `wrangler.toml`.
-2. `npx wrangler secret put TRANSCRIPT_API_KEY` (input interattivo: la
-   chiave non passa mai dalla chat).
+2. `npx wrangler secret put TRANSCRIPT_API_KEYS` (input interattivo: la
+   chiave non passa mai dalla chat). Oggi una sola chiave; più chiavi si
+   incollano separate da virgola.
 3. `./scripts/deploy.sh` nel repo del worker.
 4. Verifica con `curl` sull'URL `workers.dev` — non in locale: `dev:worker`
    esegue la copia stale in `worker/`, che non è il codice in produzione.
