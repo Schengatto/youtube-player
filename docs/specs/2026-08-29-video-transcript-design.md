@@ -108,11 +108,15 @@ GET /transcript?videoId=<id>
   `LASTFM_API_KEY`.
 - Lingua: si prende la traccia predefinita del video. Nessun parametro di
   lingua in questa versione (vedi Fuori scope).
-- Il worker deve richiedere **esplicitamente i soli sottotitoli già
-  esistenti**, mai la generazione automatica del testo per i video che non
-  ne hanno: quella modalità consuma più crediti ed è incompatibile con il
-  vincolo di costo zero. Va fissata esplicitamente, senza affidarsi al
-  comportamento predefinito del provider.
+- Il worker deve ottenere **solo i sottotitoli già esistenti**, mai la
+  generazione automatica del testo per i video che non ne hanno: quella
+  modalità consuma il doppio dei crediti ed è incompatibile con il vincolo
+  di costo zero. **La garanzia è la scelta dell'endpoint**, non un
+  parametro: il fornitore espone un endpoint dedicato a YouTube, privo di
+  qualsiasi via di generazione, e un endpoint generico che invece ci
+  ricade da solo se il video non ha sottotitoli. Il worker usa il primo.
+  (Corregge la prima stesura, che parlava di un parametro da fissare: quel
+  parametro sull'endpoint dedicato non esiste.)
 - Costo: **1 subrequest** nel caso normale. Il tetto di 50 per invocazione
   documentato in `cloudflare-worker-proxy-and-deploy` non è un tema qui.
 
@@ -185,13 +189,14 @@ Nessun fetch, nessun DOM, interamente testabile:
 ```ts
 export interface TranscriptSegment { start: number; dur: number; text: string }
 
-export const formatCue = (seconds: number): string
 export const findActiveIndex = (segments: TranscriptSegment[], t: number): number
 export const filterSegments = (segments: TranscriptSegment[], query: string): TranscriptSegment[]
 export const toPlainText = (segments: TranscriptSegment[]): string
 ```
 
-- `formatCue`: `mm:ss`, e `h:mm:ss` oltre l'ora.
+- La formattazione `mm:ss` / `h:mm:ss` **non** va riscritta qui: esiste già
+  dentro `useBookmarks` come `formatTimestamp`. Va spostata in
+  `src/utils/duration.ts` come `formatSeconds` e usata da entrambi.
 - `findActiveIndex`: ultimo segmento con `start <= t`; `-1` prima del
   primo o su lista vuota. Ricerca binaria — viene chiamata in polling.
 - `filterSegments`: match case-insensitive sul testo; query vuota o solo
