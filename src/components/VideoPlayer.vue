@@ -162,7 +162,8 @@ const stopTranscriptTimers = () => {
 };
 
 const startHighlight = () => {
-  if (highlightTimer) return;
+  // A minimized player shows no panel, so polling the position would be work nobody can see.
+  if (highlightTimer || props.isMinimized) return;
   highlightTimer = setInterval(() => {
     transcriptTime.value = getCurrentTime();
   }, TRANSCRIPT_HIGHLIGHT_INTERVAL);
@@ -200,11 +201,22 @@ const loadTranscript = async () => {
   transcriptStatus.value = result.status === 'quota' ? 'quota' : 'error';
 };
 
+/**
+ * States nothing will ever move out of on its own. Reopening the tab is the user asking again,
+ * so it is allowed to spend one more request; nothing else may, which keeps the retry
+ * automatic-free.
+ */
+const isTranscriptDeadEnd = () =>
+  transcriptStatus.value === 'error' || transcriptStatus.value === 'quota';
+
 /** The fetch starts only here: whoever never opens the tab never consumes anything. */
 const openTranscriptTab = () => {
   activeTab.value = 'transcript';
   if (transcriptStatus.value === 'ok') startHighlight();
-  if (transcriptLoaded) return;
+  if (transcriptLoaded && !isTranscriptDeadEnd()) return;
+  // Without this the fresh attempt would inherit the exhausted budget of the failed one and
+  // give up on its very first 'pending' answer.
+  transcriptRetries = 0;
   transcriptLoaded = true;
   transcriptStatus.value = 'loading';
   loadTranscript();
@@ -214,6 +226,14 @@ const selectTab = (tab: 'comments' | 'bookmarks') => {
   activeTab.value = tab;
   stopHighlight();
 };
+
+watch(() => props.isMinimized, (minimized) => {
+  if (minimized) {
+    stopHighlight();
+    return;
+  }
+  if (activeTab.value === 'transcript' && transcriptStatus.value === 'ok') startHighlight();
+});
 
 onUnmounted(() => {
   stopTranscriptTimers();

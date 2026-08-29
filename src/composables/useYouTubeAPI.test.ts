@@ -131,6 +131,20 @@ describe('getTranscript', () => {
     expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'pending', retryAfter: 5 });
   });
 
+  it('refuses a zero or negative wait, which would burn the retry budget in milliseconds', async () => {
+    respondWith({ status: 'pending', retryAfter: 0 }, true, 202);
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'pending', retryAfter: 5 });
+
+    respondWith({ status: 'pending', retryAfter: -30 }, true, 202);
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'pending', retryAfter: 5 });
+  });
+
+  it('falls back to the default wait when the server sends something that is not a number', async () => {
+    respondWith({ status: 'pending', retryAfter: 'soon' }, true, 202);
+
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'pending', retryAfter: 5 });
+  });
+
   it('distinguishes an exhausted quota from a failure', async () => {
     respondWith({ error: 'quota' }, false, 429);
 

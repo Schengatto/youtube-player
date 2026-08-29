@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import type { TranscriptSegment } from '@/utils/transcript';
 import TranscriptPanel from './TranscriptPanel.vue';
 
@@ -35,6 +35,37 @@ describe('TranscriptPanel', () => {
 
     expect(rows[1]!.classes()).toContain('active');
     expect(rows[0]!.classes()).not.toContain('active');
+    expect(rows[1]!.attributes('aria-current')).toBe('true');
+    expect(rows[0]!.attributes('aria-current')).toBeUndefined();
+  });
+
+  it('marks only one line when two cues share the same start', () => {
+    // Two cues at the same instant is normal in real subtitles; keying the rows on `start`
+    // made Vue see one key twice and lit both rows up.
+    const twins: TranscriptSegment[] = [
+      { start: 0, dur: 2, text: 'first line' },
+      { start: 10, dur: 2, text: 'a speaker' },
+      { start: 10, dur: 2, text: 'and another at the same instant' },
+      { start: 20, dur: 2, text: 'later line' },
+    ];
+    const rows = panel({ segments: twins, currentTime: 12 }).findAll('.transcript-line');
+
+    expect(rows).toHaveLength(4);
+    expect(rows.filter(row => row.classes().includes('active'))).toHaveLength(1);
+    expect(rows[2]!.classes()).toContain('active');
+  });
+
+  it('labels the search box for a screen reader rather than relying on the placeholder', () => {
+    const input = panel().find('.transcript-search input');
+
+    expect(input.attributes('aria-label')).toBe('Search the transcript...');
+  });
+
+  it('announces the waiting and failing states through a live region', () => {
+    const message = panel({ segments: [], status: 'error' }).find('.no-data');
+
+    expect(message.attributes('aria-live')).toBe('polite');
+    expect(message.attributes('role')).toBe('status');
   });
 
   it('filters the lines by the search box', async () => {
@@ -64,17 +95,25 @@ describe('TranscriptPanel', () => {
     expect(writeText).toHaveBeenCalledWith(
       'Welcome to the video\nToday we talk about cooking\nLet\'s start with the ingredients',
     );
+    // The button confirms the copy, which is also what makes the refusal test below mean
+    // something: the label does move, so finding it unmoved is evidence.
+    await flushPromises();
+    expect(wrapper.find('.transcript-copy').text()).toBe('Copied');
     vi.unstubAllGlobals();
   });
 
   it('survives a browser that refuses the clipboard', async () => {
     vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) } });
     const wrapper = panel();
+    const button = wrapper.find('.transcript-copy');
+    expect(button.text()).toBe('Copy');
 
-    await wrapper.find('.transcript-copy').trigger('click');
-    await Promise.resolve();
+    await button.trigger('click');
+    await flushPromises();
 
-    expect(wrapper.text()).not.toContain('Copied');
+    // Still usable and still offering to copy, rather than stuck on a confirmation it never earned.
+    expect(wrapper.find('.transcript-copy').text()).toBe('Copy');
+    expect(wrapper.findAll('.transcript-line')).toHaveLength(3);
     vi.unstubAllGlobals();
   });
 

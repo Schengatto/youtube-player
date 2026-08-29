@@ -49,3 +49,9 @@ export const RECOMMENDATION_BUFFER = 20;
 export const TRANSCRIPT_MAX_RETRIES = 12;
 /** Milliseconds between two reads of the player position for highlighting. */
 export const TRANSCRIPT_HIGHLIGHT_INTERVAL = 500;
+/**
+ * Seconds to wait before asking again when the server doesn't say how long. Doubles as the
+ * shortest wait we accept from it: a smaller one would spend the whole retry budget in
+ * milliseconds against a monthly request quota.
+ */
+export const TRANSCRIPT_DEFAULT_RETRY = 5;

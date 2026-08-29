@@ -2,7 +2,7 @@ import type { Video, VideoDetails, VideoComment } from '@/types';
 import type { TrackSeed } from '@/utils/music';
 import type { TranscriptSegment } from '@/utils/transcript';
 import { INTEREST_CONFIG } from '@/utils/youtube-categories';
-import { PAGE_SIZE, RECOMMENDATION_BUFFER, FAVORITES_FEED_DAYS } from '@/utils/constants';
+import { PAGE_SIZE, RECOMMENDATION_BUFFER, FAVORITES_FEED_DAYS, TRANSCRIPT_DEFAULT_RETRY } from '@/utils/constants';
 import { chunkChannels, mergeRecentVideos } from '@/utils/feed';
 
 const API_BASE = import.meta.env.VITE_API_PROXY_URL as string || 'http://localhost:8787';
@@ -35,8 +35,15 @@ export type TranscriptResponse =
   | { status: 'quota' }
   | { status: 'error' };
 
-/** Fallback wait when the server doesn't say how long. */
-const TRANSCRIPT_DEFAULT_RETRY = 5;
+/**
+ * The server's wait hint is untrusted input: `0`, a negative number or a non-number would turn
+ * the retry budget into a burst of requests against a monthly quota, so anything below the
+ * default wait — including a value that isn't a number at all — becomes the default wait.
+ */
+const sanitizeRetryAfter = (value: unknown): number => {
+  const seconds = Number(value);
+  return Number.isFinite(seconds) ? Math.max(seconds, TRANSCRIPT_DEFAULT_RETRY) : TRANSCRIPT_DEFAULT_RETRY;
+};
 
 const fetchApi = async (path: string): Promise<Response> => {
   const response = await fetch(`${API_BASE}${path}`);
@@ -241,8 +248,8 @@ export const useYouTubeAPI = () => {
       const response = await fetch(`${API_BASE}/transcript?${params}`);
 
       if (response.status === 202) {
-        const data = await response.json() as { retryAfter?: number };
-        return { status: 'pending', retryAfter: data.retryAfter ?? TRANSCRIPT_DEFAULT_RETRY };
+        const data = await response.json() as { retryAfter?: unknown };
+        return { status: 'pending', retryAfter: sanitizeRetryAfter(data.retryAfter) };
       }
       if (response.status === 429) return { status: 'quota' };
       if (!response.ok) return { status: 'error' };

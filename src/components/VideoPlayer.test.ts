@@ -3,11 +3,15 @@ import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import type { Video, VideoDetails } from '@/types';
 import { useSettings } from '@/composables/useSettings';
 import type { TranscriptResponse } from '@/composables/useYouTubeAPI';
+import { TRANSCRIPT_MAX_RETRIES } from '@/utils/constants';
 import VideoPlayer from './VideoPlayer.vue';
 
 let onVideoEnd: () => void;
 let currentTime = 0;
 let seeked: number[] = [];
+/** A spy so a test can prove the highlight interval really stopped, not merely that some
+ *  clearInterval ran somewhere. */
+const getCurrentTimeMock = vi.fn(() => currentTime);
 
 vi.mock('@/composables/useYTPlayer', () => ({
   useYTPlayer: (onEnd: () => void) => {
@@ -16,7 +20,7 @@ vi.mock('@/composables/useYTPlayer', () => ({
       loadYTApi: () => Promise.resolve(),
       createPlayer: () => {},
       destroyPlayer: () => {},
-      getCurrentTime: () => currentTime,
+      getCurrentTime: getCurrentTimeMock,
       seekTo: (seconds: number) => { seeked.push(seconds); }
     };
   }
@@ -315,6 +319,9 @@ describe('transcript tab', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Could not load the transcript');
+    // The cap is what protects the monthly request budget, so the exact number matters: the
+    // first attempt plus TRANSCRIPT_MAX_RETRIES retries, and then it stops for good.
+    expect(getTranscriptMock).toHaveBeenCalledTimes(TRANSCRIPT_MAX_RETRIES + 1);
     vi.useRealTimers();
   });
 
@@ -377,34 +384,118 @@ describe('transcript tab', () => {
     expect(wrapper.findAll('.transcript-line')).toHaveLength(1);
   });
 
-  it('stops the highlight interval when the tab is left, leaving no leaked timer', async () => {
+  it('stops polling the player position when the tab is left', async () => {
     vi.useFakeTimers();
     transcriptResponses = [{ status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] }];
     const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
     await flushPromises();
     await openTranscript(wrapper);
 
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+    // The interval really is running while the tab is open, or the second half proves nothing.
+    getCurrentTimeMock.mockClear();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(getCurrentTimeMock).toHaveBeenCalled();
+
     const commentsTab = wrapper.findAll('.tab').find(button => button.text().includes('comments'));
     await commentsTab!.trigger('click');
 
-    expect(clearIntervalSpy).toHaveBeenCalled();
-    clearIntervalSpy.mockRestore();
+    getCurrentTimeMock.mockClear();
+    await vi.advanceTimersByTimeAsync(10000);
+
+    expect(getCurrentTimeMock).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 
-  it('clears every pending transcript timer on unmount', async () => {
+  it('stops polling while the player is minimized and resumes when it is restored', async () => {
+    vi.useFakeTimers();
+    transcriptResponses = [{ status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] }];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    await wrapper.setProps({ isMinimized: true });
+    getCurrentTimeMock.mockClear();
+    await vi.advanceTimersByTimeAsync(10000);
+
+    // No panel is mounted while minimized, so the poll has nothing to feed.
+    expect(getCurrentTimeMock).not.toHaveBeenCalled();
+
+    await wrapper.setProps({ isMinimized: false });
+    getCurrentTimeMock.mockClear();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(getCurrentTimeMock).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('does not fire an armed transcript retry after unmount', async () => {
     vi.useFakeTimers();
     transcriptResponses = [{ status: 'pending', retryAfter: 1 }];
     const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
     await flushPromises();
     await openTranscript(wrapper);
 
-    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
-    wrapper.unmount();
+    // A retry is armed at this point: the assertion below is about that specific timer.
+    expect(getTranscriptMock).toHaveBeenCalledTimes(1);
 
-    expect(clearTimeoutSpy).toHaveBeenCalled();
-    clearTimeoutSpy.mockRestore();
+    wrapper.unmount();
+    await vi.advanceTimersByTimeAsync(30000);
+    await flushPromises();
+
+    // A leaked timeout would keep fetching for a player nobody is looking at any more.
+    expect(getTranscriptMock).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('retries when the user reopens the tab after a failure', async () => {
+    transcriptResponses = [
+      { status: 'error' },
+      { status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] },
+    ];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    expect(wrapper.text()).toContain('Could not load the transcript');
+    expect(getTranscriptMock).toHaveBeenCalledTimes(1);
+
+    const commentsTab = wrapper.findAll('.tab').find(button => button.text().includes('comments'));
+    await commentsTab!.trigger('click');
+    await openTranscript(wrapper);
+
+    // Reopening the tab is a real user action, so it is allowed to spend one more request.
+    expect(getTranscriptMock).toHaveBeenCalledTimes(2);
+    expect(wrapper.text()).not.toContain('Could not load the transcript');
+    expect(wrapper.findAll('.transcript-line')).toHaveLength(1);
+  });
+
+  it('gives the retry a full budget instead of the exhausted one', async () => {
+    vi.useFakeTimers();
+    // The first visit burns every retry and lands on the error message.
+    transcriptResponses = Array.from({ length: 20 }, () => ({ status: 'pending', retryAfter: 1 }));
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+    await vi.advanceTimersByTimeAsync(30000);
+    await flushPromises();
+    expect(wrapper.text()).toContain('Could not load the transcript');
+
+    const commentsTab = wrapper.findAll('.tab').find(button => button.text().includes('comments'));
+    await commentsTab!.trigger('click');
+
+    // If the retry counter were not reset, this attempt would give up on its first 'pending'
+    // answer instead of waiting for the transcript that is about to be ready.
+    transcriptResponses = [
+      { status: 'pending', retryAfter: 1 },
+      { status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] },
+    ];
+    await openTranscript(wrapper);
+    expect(wrapper.text()).toContain('Preparing transcript');
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushPromises();
+
+    expect(wrapper.findAll('.transcript-line')).toHaveLength(1);
     vi.useRealTimers();
   });
 });

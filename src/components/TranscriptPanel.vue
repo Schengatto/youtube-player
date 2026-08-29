@@ -25,13 +25,23 @@ const listEl = ref<HTMLElement | null>(null);
 const following = ref(true);
 let autoScrolling = false;
 
-const visibleSegments = computed(() => filterSegments(props.segments, query.value));
-
-/** Compares the start instant rather than the index, because search changes positions. */
-const activeStart = computed(() => {
-  const index = findActiveIndex(props.segments, props.currentTime);
-  return index === -1 ? null : props.segments[index]!.start;
+/**
+ * Pairs every visible cue with its position in the *full* list. Two cues can legitimately share
+ * a `start`, so keying rows on the start instant collided in Vue's diff and lit up both rows at
+ * once; the position in the full list is unique and, unlike the position in the filtered list,
+ * does not move when the user types in the search box.
+ */
+const visibleRows = computed(() => {
+  const visible = filterSegments(props.segments, query.value);
+  let from = 0;
+  return visible.map(segment => {
+    const index = props.segments.indexOf(segment, from);
+    from = index + 1;
+    return { segment, index };
+  });
 });
+
+const activeIndex = computed(() => findActiveIndex(props.segments, props.currentTime));
 
 const statusMessage = computed(() => {
   switch (props.status) {
@@ -64,7 +74,7 @@ const copy = async () => {
   }
 };
 
-watch(activeStart, async () => {
+watch(activeIndex, async () => {
   if (!following.value || props.status !== 'ok') return;
   await nextTick();
   const row = listEl.value?.querySelector('.transcript-line.active');
@@ -79,26 +89,29 @@ watch(activeStart, async () => {
   <div class="transcript-panel">
     <div v-if="status === 'ok'" class="transcript-toolbar">
       <div class="transcript-search">
-        <input v-model="query" type="search" :placeholder="t.transcriptSearch" />
+        <input v-model="query" type="search" :placeholder="t.transcriptSearch" :aria-label="t.transcriptSearch" />
       </div>
       <button class="transcript-copy" @click="copy">
         {{ copied ? t.transcriptCopied : t.transcriptCopy }}
       </button>
     </div>
 
-    <p v-if="statusMessage" class="no-data">{{ statusMessage }}</p>
+    <!-- A live region: without it a screen-reader user is never told the transcript arrived,
+         is still being prepared, or failed. -->
+    <p v-if="statusMessage" class="no-data" role="status" aria-live="polite">{{ statusMessage }}</p>
 
     <div v-else ref="listEl" class="transcript-list" @scroll="onScroll">
       <button
-        v-for="segment in visibleSegments"
-        :key="segment.start"
-        :class="['transcript-line', { active: segment.start === activeStart }]"
-        @click="handleSeek(segment.start)"
+        v-for="row in visibleRows"
+        :key="row.index"
+        :class="['transcript-line', { active: row.index === activeIndex }]"
+        :aria-current="row.index === activeIndex ? 'true' : undefined"
+        @click="handleSeek(row.segment.start)"
       >
-        <span class="transcript-time">{{ formatSeconds(segment.start) }}</span>
-        <span class="transcript-text">{{ segment.text }}</span>
+        <span class="transcript-time">{{ formatSeconds(row.segment.start) }}</span>
+        <span class="transcript-text">{{ row.segment.text }}</span>
       </button>
-      <p v-if="visibleSegments.length === 0" class="no-data">{{ t.transcriptNoMatches }}</p>
+      <p v-if="visibleRows.length === 0" class="no-data" role="status" aria-live="polite">{{ t.transcriptNoMatches }}</p>
     </div>
   </div>
 </template>
