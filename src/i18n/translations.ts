@@ -167,6 +167,16 @@ type TranslationKeys = {
   newVersionAvailable: string;
   updateNow: string;
   reportIssue: string;
+  transcript: string;
+  transcriptLoading: string;
+  transcriptPending: string;
+  transcriptEmpty: string;
+  transcriptQuota: string;
+  transcriptError: string;
+  transcriptSearch: string;
+  transcriptNoMatches: string;
+  transcriptCopy: string;
+  transcriptCopied: string;
 };
 
 const it: TranslationKeys = {
@@ -312,6 +322,16 @@ const it: TranslationKeys = {
   newVersionAvailable: 'Nuova versione disponibile',
   updateNow: 'Aggiorna',
   reportIssue: 'Segnala un problema',
+  transcript: 'Trascrizione',
+  transcriptLoading: 'Caricamento trascrizione...',
+  transcriptPending: 'Trascrizione in preparazione...',
+  transcriptEmpty: 'Nessuna trascrizione disponibile per questo video',
+  transcriptQuota: 'Limite mensile raggiunto, riprova il mese prossimo',
+  transcriptError: 'Impossibile caricare la trascrizione',
+  transcriptSearch: 'Cerca nella trascrizione...',
+  transcriptNoMatches: 'Nessun risultato',
+  transcriptCopy: 'Copia',
+  transcriptCopied: 'Copiato',
 };
 
 const en: TranslationKeys = {
@@ -456,6 +476,16 @@ const en: TranslationKeys = {
   newVersionAvailable: 'New version available',
   updateNow: 'Update',
   reportIssue: 'Report an issue',
+  transcript: 'Transcript',
+  transcriptLoading: 'Loading transcript...',
+  transcriptPending: 'Preparing transcript...',
+  transcriptEmpty: 'No transcript available for this video',
+  transcriptQuota: 'Monthly limit reached, try again next month',
+  transcriptError: 'Could not load the transcript',
+  transcriptSearch: 'Search the transcript...',
+  transcriptNoMatches: 'No matches',
+  transcriptCopy: 'Copy',
+  transcriptCopied: 'Copied',
 };
 
 const fr: TranslationKeys = {
@@ -600,6 +630,16 @@ const fr: TranslationKeys = {
   newVersionAvailable: 'Nouvelle version disponible',
   updateNow: 'Mettre à jour',
   reportIssue: 'Signaler un problème',
+  transcript: 'Transcription',
+  transcriptLoading: 'Chargement de la transcription...',
+  transcriptPending: 'Preparation de la transcription...',
+  transcriptEmpty: 'Aucune transcription disponible pour cette video',
+  transcriptQuota: 'Limite mensuelle atteinte, reessayez le mois prochain',
+  transcriptError: 'Impossible de charger la transcription',
+  transcriptSearch: 'Rechercher dans la transcription...',
+  transcriptNoMatches: 'Aucun resultat',
+  transcriptCopy: 'Copier',
+  transcriptCopied: 'Copie',
 };
 
 const de: TranslationKeys = {
@@ -745,6 +785,16 @@ const de: TranslationKeys = {
   newVersionAvailable: 'Neue Version verfügbar',
   updateNow: 'Aktualisieren',
   reportIssue: 'Problem melden',
+  transcript: 'Transkript',
+  transcriptLoading: 'Transkript wird geladen...',
+  transcriptPending: 'Transkript wird vorbereitet...',
+  transcriptEmpty: 'Kein Transkript fur dieses Video verfugbar',
+  transcriptQuota: 'Monatliches Limit erreicht, versuche es nachsten Monat',
+  transcriptError: 'Transkript konnte nicht geladen werden',
+  transcriptSearch: 'Im Transkript suchen...',
+  transcriptNoMatches: 'Keine Treffer',
+  transcriptCopy: 'Kopieren',
+  transcriptCopied: 'Kopiert',
 };
 
 const es: TranslationKeys = {
@@ -889,6 +939,16 @@ const es: TranslationKeys = {
   newVersionAvailable: 'Nueva versión disponible',
   updateNow: 'Actualizar',
   reportIssue: 'Reportar un problema',
+  transcript: 'Transcripcion',
+  transcriptLoading: 'Cargando transcripcion...',
+  transcriptPending: 'Preparando la transcripcion...',
+  transcriptEmpty: 'No hay transcripcion disponible para este video',
+  transcriptQuota: 'Limite mensual alcanzado, intentalo el proximo mes',
+  transcriptError: 'No se pudo cargar la transcripcion',
+  transcriptSearch: 'Buscar en la transcripcion...',
+  transcriptNoMatches: 'Sin resultados',
+  transcriptCopy: 'Copiar',
+  transcriptCopied: 'Copiado',
 };
 
 const pt: TranslationKeys = {
@@ -1033,6 +1093,16 @@ const pt: TranslationKeys = {
   newVersionAvailable: 'Nova versão disponível',
   updateNow: 'Atualizar',
   reportIssue: 'Reportar um problema',
+  transcript: 'Transcricao',
+  transcriptLoading: 'Carregando transcricao...',
+  transcriptPending: 'Preparando a transcricao...',
+  transcriptEmpty: 'Nenhuma transcricao disponivel para este video',
+  transcriptQuota: 'Limite mensal atingido, tente no proximo mes',
+  transcriptError: 'Nao foi possivel carregar a transcricao',
+  transcriptSearch: 'Pesquisar na transcricao...',
+  transcriptNoMatches: 'Nenhum resultado',
+  transcriptCopy: 'Copiar',
+  transcriptCopied: 'Copiado',
 };
 
 const zh: TranslationKeys = {
@@ -1177,6 +1247,16 @@ const zh: TranslationKeys = {
   newVersionAvailable: '新版本可用',
   updateNow: '更新',
   reportIssue: '报告问题',
+  transcript: '字幕文本',
+  transcriptLoading: '正在加载字幕文本...',
+  transcriptPending: '正在准备字幕文本...',
+  transcriptEmpty: '此视频没有可用的字幕文本',
+  transcriptQuota: '已达每月上限，请下个月再试',
+  transcriptError: '无法加载字幕文本',
+  transcriptSearch: '在字幕文本中搜索...',
+  transcriptNoMatches: '没有匹配结果',
+  transcriptCopy: '复制',
+  transcriptCopied: '已复制',
 };
 
 const ja: TranslationKeys = {
@@ -1321,6 +1401,16 @@ const ja: TranslationKeys = {
   newVersionAvailable: '新しいバージョンが利用可能',
   updateNow: '更新する',
   reportIssue: '問題を報告',
+  transcript: '文字起こし',
+  transcriptLoading: '文字起こしを読み込み中...',
+  transcriptPending: '文字起こしを準備中...',
+  transcriptEmpty: 'この動画には文字起こしがありません',
+  transcriptQuota: '月間の上限に達しました。来月お試しください',
+  transcriptError: '文字起こしを読み込めませんでした',
+  transcriptSearch: '文字起こしを検索...',
+  transcriptNoMatches: '一致する結果がありません',
+  transcriptCopy: 'コピー',
+  transcriptCopied: 'コピーしました',
 };
 
 const hi: TranslationKeys = {
@@ -1465,6 +1555,16 @@ const hi: TranslationKeys = {
   newVersionAvailable: 'नया संस्करण उपलब्ध',
   updateNow: 'अपडेट करें',
   reportIssue: 'समस्या की रिपोर्ट करें',
+  transcript: 'ट्रांसक्रिप्ट',
+  transcriptLoading: 'ट्रांसक्रिप्ट लोड हो रहा है...',
+  transcriptPending: 'ट्रांसक्रिप्ट तैयार हो रहा है...',
+  transcriptEmpty: 'इस वीडियो के लिए कोई ट्रांसक्रिप्ट उपलब्ध नहीं है',
+  transcriptQuota: 'मासिक सीमा पूरी हो गई, अगले महीने कोशिश करें',
+  transcriptError: 'ट्रांसक्रिप्ट लोड नहीं हो सका',
+  transcriptSearch: 'ट्रांसक्रिप्ट में खोजें...',
+  transcriptNoMatches: 'कोई परिणाम नहीं',
+  transcriptCopy: 'कॉपी करें',
+  transcriptCopied: 'कॉपी हो गया',
 };
 
 export const translations: Record<Locale, TranslationKeys> = {
