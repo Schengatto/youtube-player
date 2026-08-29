@@ -25,10 +25,37 @@ Verificato il 2026-08-29, prima del design:
 
 Conseguenza: il testo può arrivare **solo da un provider esterno** che
 esegue l'estrazione al posto nostro. Questo comporta una dipendenza da un
-servizio che accede a YouTube in modo non autorizzato dai ToS: comprare il
-servizio sposta la responsabilità sul fornitore, non la elimina. La scelta
+servizio che accede a YouTube in modo non autorizzato dai ToS: appoggiarsi
+a quel servizio sposta la responsabilità sul fornitore, non la elimina —
+e questo vale identicamente sul piano gratuito. La scelta
 è stata presa consapevolmente, tenendo conto che questo repo aveva già
 rimosso il fallback Piped per compliance prima della pubblicazione.
+
+## Vincolo: costo zero
+
+La feature non deve generare alcun costo, né ora né in futuro. Questo
+determina la scelta del fornitore e il comportamento al raggiungimento del
+limite.
+
+- Si usa un provider il cui piano gratuito è **ricorrente** (si rinnova
+  ogni mese) e **non richiede una carta di credito**. Quest'ultimo punto è
+  la garanzia vera: non è un contatore scritto bene a impedire un
+  addebito, è l'assenza di uno strumento con cui addebitare.
+- Fornitori con crediti gratuiti **una tantum**, seguiti da pagamento a
+  consumo, sono esclusi anche quando costano meno a volume.
+- Il tetto è di circa **100 video nuovi al mese**, non 100
+  visualizzazioni: grazie alla cache permanente un video già aperto una
+  volta, da chiunque, resta gratuito per sempre e per tutti.
+- **Nessun contatore di budget lato worker.** Sarebbe stato uno stato in
+  più da mantenere e da azzerare ogni mese senza aggiungere alcuna
+  protezione: senza carta registrata l'addebito è impossibile, e
+  l'esaurimento dei crediti lo comunica il provider stesso. Il worker si
+  limita a tradurre quella risposta in uno stato esplicito.
+
+Limite accettato consapevolmente: un piano gratuito è una concessione del
+fornitore, non un contratto. Se venisse chiuso, la feature smetterebbe di
+funzionare per i video non ancora in cache. Quelli già cachati
+continuerebbero a funzionare.
 
 ## Vincolo permanente: repo pubblico
 
@@ -51,7 +78,7 @@ locale, con funzioni pure e senza costi aggiuntivi.
 
 ## 1. Worker — `GET /transcript` (repo privato, qui solo il contratto)
 
-```
+```text
 GET /transcript?videoId=<id>
 → 200 { videoId, lang: string, segments: [{ start: number, dur: number, text: string }] }
 ```
@@ -59,6 +86,9 @@ GET /transcript?videoId=<id>
 - `start` e `dur` in secondi.
 - Video senza sottotitoli → `200` con `segments: []`. **Non** è un errore:
   è uno stato normale che la UI sa mostrare.
+- Crediti mensili del provider esauriti → `429`. Stato distinto da "nessun
+  sottotitolo": il video potrebbe avere un transcript, semplicemente non
+  possiamo recuperarlo adesso. La UI lo dice con parole diverse.
 - `TRANSCRIPT_API_KEY` assente → `503`, come già fa `/radio` con
   `LASTFM_API_KEY`.
 - Lingua: si prende la traccia predefinita del video. Nessun parametro di
@@ -114,8 +144,11 @@ export const toPlainText = (segments: TranscriptSegment[]): string
 - Nuovo componente `TranscriptPanel.vue` + `TranscriptPanel.css`:
   `VideoPlayer.vue` è già a 445 righe e assorbire lì anche ricerca,
   polling ed evidenziazione lo renderebbe difficile da tenere in testa.
-  Props: `segments`, `loading`, `error`, `currentTime`. Emette `seek`
-  (secondi) e non tocca il player direttamente.
+  Props: `segments`, `loading`, `currentTime` e `status:
+  'ok' | 'empty' | 'quota' | 'error'`. Uno stato unico e non due booleani
+  separati, perché i quattro casi si escludono a vicenda e ognuno ha un
+  messaggio diverso. Emette `seek` (secondi) e non tocca il player
+  direttamente.
 - Click su una riga → `seekTo(segment.start)`, riusando lo stesso percorso
   già in uso per i segnalibri (`handleSeekToBookmark`).
 - Evidenziazione: `getCurrentTime()` in polling ogni 500ms, **avviato solo
@@ -131,6 +164,9 @@ export const toPlainText = (segments: TranscriptSegment[]): string
 
 - `segments: []` → messaggio "nessun transcript disponibile", nessun
   bottone di copia. Non è un errore.
+- `429` → messaggio dedicato: il limite mensile gratuito è esaurito, i
+  video già aperti in precedenza restano disponibili. Testo diverso dal
+  caso precedente, perché la causa e l'attesa sono diverse.
 - Fetch fallito o `503` → messaggio di errore con possibilità di riprovare;
   il resto del player non viene toccato.
 - Clipboard negata dal browser → la conferma non compare, nessun crash.
@@ -138,10 +174,13 @@ export const toPlainText = (segments: TranscriptSegment[]): string
 ## 5. Test
 
 Worker (repo privato): mapping della risposta del provider sul contratto,
-hit e miss di KV, video senza sottotitoli (incluso il TTL breve), chiave
-mancante → 503.
+hit e miss di KV, video senza sottotitoli (incluso il TTL breve), crediti
+esauriti → 429, chiave mancante → 503. Il caso "crediti esauriti" verifica
+anche che **non venga scritto nulla in KV**: una risposta vuota per quota
+non deve sporcare la cache e impedire il recupero il mese successivo.
 
 Frontend (questo repo):
+
 - `src/utils/transcript.test.ts` per le quattro funzioni pure, inclusi i
   bordi: lista vuota, `t` prima del primo segmento, query senza match,
   durate oltre l'ora.
@@ -164,7 +203,8 @@ tab che fallisce.
 
 ## Fuori scope
 
-Traduzione del transcript in lingue che il video non ha. Riassunto
-automatico (richiederebbe un LLM: secondo fornitore, secondo secret, costo
-per richiesta non cachabile allo stesso modo). Selettore fra più tracce di
-sottotitoli. Export `.srt` o download del testo come file.
+Traduzione del transcript in lingue che il video non ha e riassunto
+automatico: entrambi sono richieste a pagamento aggiuntive (il riassunto
+richiederebbe anche un LLM, quindi un secondo fornitore e un secondo
+secret), quindi incompatibili con il vincolo di costo zero. Selettore fra
+più tracce di sottotitoli. Export `.srt` o download del testo come file.
