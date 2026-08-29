@@ -2,6 +2,7 @@ import { ref, watch } from 'vue';
 import type { Bookmark, Video } from '@/types';
 import { storage } from '@/utils/storage';
 import { STORAGE_KEYS } from '@/utils/constants';
+import { formatSeconds } from '@/utils/duration';
 
 const bookmarks = ref<Bookmark[]>([]);
 let loaded = false;
@@ -54,13 +55,7 @@ export function useBookmarks() {
     bookmarks.value = [];
   };
 
-  const formatTimestamp = (seconds: number): string => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = Math.floor(seconds % 60);
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${m}:${String(s).padStart(2, '0')}`;
-  };
+  const formatTimestamp = formatSeconds;
 
   return {
     bookmarks,

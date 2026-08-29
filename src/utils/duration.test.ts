@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDuration } from './duration';
+import { formatDuration, formatSeconds } from './duration';
 
 describe('formatDuration', () => {
   it('formats hours, minutes, seconds', () => {
@@ -36,5 +36,27 @@ describe('formatDuration', () => {
 
   it('returns empty string for bare PT', () => {
     expect(formatDuration('PT')).toBe('');
+  });
+});
+
+describe('formatSeconds', () => {
+  it('formats minutes and seconds', () => {
+    expect(formatSeconds(90)).toBe('1:30');
+  });
+
+  it('pads single-digit seconds', () => {
+    expect(formatSeconds(65)).toBe('1:05');
+  });
+
+  it('adds hours past the hour mark', () => {
+    expect(formatSeconds(3661)).toBe('1:01:01');
+  });
+
+  it('formats the start of the video', () => {
+    expect(formatSeconds(0)).toBe('0:00');
+  });
+
+  it('truncates fractions of a second', () => {
+    expect(formatSeconds(12.9)).toBe('0:12');
   });
 });
