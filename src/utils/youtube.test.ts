@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseYouTubeUrl, extractVideoIdFromUrl, extractVideoIdFromSharedText, getChannelUrl, getChannelSubscribeUrl } from './youtube';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { parseYouTubeUrl, extractVideoIdFromUrl, extractVideoIdFromSharedText, getChannelUrl, getChannelSubscribeUrl, buildVideoShareUrl } from './youtube';
 
 describe('parseYouTubeUrl', () => {
   it('reads the v param from a watch url', () => {
@@ -97,5 +97,57 @@ describe('getChannelSubscribeUrl', () => {
   it('adds the subscribe confirmation param', () => {
     expect(getChannelSubscribeUrl('UCuAXFkgsw1L7xaCfnd5JJOw'))
       .toBe('https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw?sub_confirmation=1');
+  });
+});
+
+describe('buildVideoShareUrl', () => {
+  beforeEach(() => {
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('builds a plain youtube watch url', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'youtube'))
+      .toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  });
+
+  it('appends the youtube start time with the seconds suffix', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'youtube', 134))
+      .toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=134s');
+  });
+
+  it('builds a plain app url on the current origin', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'app'))
+      .toBe(`${window.location.origin}/?v=dQw4w9WgXcQ`);
+  });
+
+  it('appends the app start time as bare seconds', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'app', 134))
+      .toBe(`${window.location.origin}/?v=dQw4w9WgXcQ&t=134`);
+  });
+
+  it('keeps the app url on the current path', () => {
+    window.history.replaceState({}, '', '/player');
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'app'))
+      .toBe(`${window.location.origin}/player?v=dQw4w9WgXcQ`);
+  });
+
+  it('truncates the fractional seconds the player reports', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'youtube', 134.87))
+      .toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=134s');
+  });
+
+  it('omits the start time at the very beginning of the video', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'youtube', 0))
+      .toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  });
+
+  it('omits the start time when it rounds down to zero', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'youtube', 0.4))
+      .toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  });
+
+  it('omits the start time when there is none', () => {
+    expect(buildVideoShareUrl('dQw4w9WgXcQ', 'app', null))
+      .toBe(`${window.location.origin}/?v=dQw4w9WgXcQ`);
   });
 });

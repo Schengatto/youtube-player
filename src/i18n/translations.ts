@@ -106,6 +106,7 @@ type TranslationKeys = {
   linkCopied: string;
   shareYouTube: string;
   shareApp: string;
+  shareStartAt: string;
   openFromLink: string;
   linkPlaceholder: string;
   searchError: string;
@@ -250,6 +251,7 @@ const it: TranslationKeys = {
   linkCopied: 'Link copiato negli appunti!',
   shareYouTube: 'Link YouTube',
   shareApp: 'Link Tube-Too',
+  shareStartAt: 'Inizia da',
   openFromLink: 'Apri video da link',
   linkPlaceholder: 'Incolla link YouTube o ID video...',
   searchError: 'Errore nella ricerca. Riprova piu tardi.',
@@ -393,6 +395,7 @@ const en: TranslationKeys = {
   linkCopied: 'Link copied to clipboard!',
   shareYouTube: 'YouTube link',
   shareApp: 'Tube-Too link',
+  shareStartAt: 'Start at',
   openFromLink: 'Open video from link',
   linkPlaceholder: 'Paste YouTube link or video ID...',
   searchError: 'Search error. Please try again later.',
@@ -536,6 +539,7 @@ const fr: TranslationKeys = {
   linkCopied: 'Lien copie dans le presse-papiers !',
   shareYouTube: 'Lien YouTube',
   shareApp: 'Lien Tube-Too',
+  shareStartAt: 'Démarrer à',
   openFromLink: 'Ouvrir une video depuis un lien',
   linkPlaceholder: 'Collez un lien YouTube ou un ID de video...',
   searchError: 'Erreur de recherche. Veuillez reessayer plus tard.',
@@ -680,6 +684,7 @@ const de: TranslationKeys = {
   linkCopied: 'Link in die Zwischenablage kopiert!',
   shareYouTube: 'YouTube-Link',
   shareApp: 'Tube-Too-Link',
+  shareStartAt: 'Starten bei',
   openFromLink: 'Video uber Link offnen',
   linkPlaceholder: 'YouTube-Link oder Video-ID einfugen...',
   searchError: 'Suchfehler. Bitte versuche es spater erneut.',
@@ -823,6 +828,7 @@ const es: TranslationKeys = {
   linkCopied: 'Enlace copiado al portapapeles!',
   shareYouTube: 'Enlace YouTube',
   shareApp: 'Enlace Tube-Too',
+  shareStartAt: 'Empezar en',
   openFromLink: 'Abrir video desde enlace',
   linkPlaceholder: 'Pega un enlace de YouTube o ID de video...',
   searchError: 'Error en la busqueda. Intentalo de nuevo mas tarde.',
@@ -966,6 +972,7 @@ const pt: TranslationKeys = {
   linkCopied: 'Link copiado para a area de transferencia!',
   shareYouTube: 'Link YouTube',
   shareApp: 'Link Tube-Too',
+  shareStartAt: 'Começar em',
   openFromLink: 'Abrir video pelo link',
   linkPlaceholder: 'Cole o link do YouTube ou ID do video...',
   searchError: 'Erro na pesquisa. Tente novamente mais tarde.',
@@ -1109,6 +1116,7 @@ const zh: TranslationKeys = {
   linkCopied: '链接已复制到剪贴板！',
   shareYouTube: 'YouTube 链接',
   shareApp: 'Tube-Too 链接',
+  shareStartAt: '开始于',
   openFromLink: '通过链接打开视频',
   linkPlaceholder: '粘贴YouTube链接或视频ID...',
   searchError: '搜索错误。请稍后重试。',
@@ -1252,6 +1260,7 @@ const ja: TranslationKeys = {
   linkCopied: 'リンクをクリップボードにコピーしました！',
   shareYouTube: 'YouTube リンク',
   shareApp: 'Tube-Too リンク',
+  shareStartAt: '開始位置',
   openFromLink: 'リンクから動画を開く',
   linkPlaceholder: 'YouTubeリンクまたは動画IDを貼り付け...',
   searchError: '検索エラー。後でもう一度お試しください。',
@@ -1395,6 +1404,7 @@ const hi: TranslationKeys = {
   linkCopied: 'लिंक क्लिपबोर्ड पर कॉपी किया गया!',
   shareYouTube: 'YouTube लिंक',
   shareApp: 'Tube-Too लिंक',
+  shareStartAt: 'यहाँ से शुरू करें',
   openFromLink: 'लिंक से वीडियो खोलें',
   linkPlaceholder: 'YouTube लिंक या वीडियो ID पेस्ट करें...',
   searchError: 'खोज में त्रुटि। कृपया बाद में पुनः प्रयास करें।',

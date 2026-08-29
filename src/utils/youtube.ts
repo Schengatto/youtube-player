@@ -59,6 +59,26 @@ export const getChannelUrl = (channelId: string): string =>
 export const getChannelSubscribeUrl = (channelId: string): string =>
   `${getChannelUrl(channelId)}?sub_confirmation=1`;
 
+/**
+ * Builds a shareable link to a video, optionally resuming at `startSeconds`.
+ * YouTube wants the seconds suffixed with `s`; our own links use bare seconds,
+ * the format the `t` param is read back with on startup.
+ */
+export const buildVideoShareUrl = (
+  videoId: string,
+  target: 'youtube' | 'app',
+  startSeconds?: number | null
+): string => {
+  const seconds = Math.floor(startSeconds ?? 0);
+  const base = target === 'youtube'
+    ? `https://www.youtube.com/watch?v=${videoId}`
+    : `${window.location.origin}${window.location.pathname}?v=${videoId}`;
+
+  if (seconds <= 0) return base;
+
+  return `${base}&t=${seconds}${target === 'youtube' ? 's' : ''}`;
+};
+
 export const getVideoFromId = (videoId: string) => {
   return {
     title: 'Video YouTube',

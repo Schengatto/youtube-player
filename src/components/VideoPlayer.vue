@@ -8,7 +8,7 @@ import { useI18n } from '@/composables/useI18n';
 import { useSettings } from '@/composables/useSettings';
 import { nextIn, previousIn } from '@/utils/queue';
 import { formatRelativeTime } from '@/utils/date';
-import { getChannelUrl, getChannelSubscribeUrl } from '@/utils/youtube';
+import { getChannelUrl, getChannelSubscribeUrl, buildVideoShareUrl } from '@/utils/youtube';
 import { musicSeed, type TrackSeed } from '@/utils/music';
 
 const { t } = useI18n();
@@ -37,13 +37,28 @@ const emit = defineEmits<{
 }>();
 
 const showShareMenu = ref(false);
+const includeStartTime = ref(false);
+const shareStartTime = ref(0);
+
+/**
+ * The time is frozen when the menu opens, not read when an entry is clicked:
+ * the video keeps playing while the menu is up, so reading it later would share
+ * a different point than the one the toggle names.
+ */
+function toggleShareMenu() {
+  showShareMenu.value = !showShareMenu.value;
+  if (!showShareMenu.value) return;
+  shareStartTime.value = getCurrentTime();
+  includeStartTime.value = false;
+}
 
 function shareUrl(type: 'youtube' | 'app') {
   if (!props.video) return;
-  const videoId = props.video.videoId;
-  const url = type === 'youtube'
-    ? `https://www.youtube.com/watch?v=${videoId}`
-    : `${window.location.origin}${window.location.pathname}?v=${videoId}`;
+  const url = buildVideoShareUrl(
+    props.video.videoId,
+    type,
+    includeStartTime.value ? shareStartTime.value : null
+  );
   showShareMenu.value = false;
   emit('share', url);
 }
@@ -113,8 +128,7 @@ const handleSeekToBookmark = (seconds: number) => {
 };
 
 const handleShareBookmark = (videoId: string, timestamp: number) => {
-  const url = `${window.location.origin}${window.location.pathname}?v=${videoId}&t=${Math.floor(timestamp)}`;
-  emit('share-bookmark', url);
+  emit('share-bookmark', buildVideoShareUrl(videoId, 'app', timestamp));
 };
 
 const handleDeleteBookmark = (id: string) => {
@@ -129,6 +143,7 @@ watch(() => props.video, async (newVideo) => {
   activeTab.value = 'comments';
   commentsError.value = false;
   playerReady.value = false;
+  showShareMenu.value = false;
 
   if (newVideo) {
     await loadYTApi();
@@ -207,7 +222,7 @@ const formatCount = (count: string): string => {
             </svg>
           </button>
           <div v-if="!isMinimized" class="share-menu-wrapper">
-            <button @click="showShareMenu = !showShareMenu" class="action-btn" :title="t.share">
+            <button @click="toggleShareMenu" class="action-btn" :title="t.share" data-test="share-btn">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="18" cy="5" r="3"></circle>
@@ -218,13 +233,18 @@ const formatCount = (count: string): string => {
               </svg>
             </button>
             <div v-if="showShareMenu" class="share-menu">
-              <button class="share-menu-item" @click="shareUrl('youtube')">
+              <button class="share-menu-toggle" role="switch" :aria-checked="includeStartTime"
+                @click="includeStartTime = !includeStartTime" data-test="share-start-toggle">
+                <span>{{ t.shareStartAt }} {{ formatTimestamp(shareStartTime) }}</span>
+                <span class="share-switch" :class="{ on: includeStartTime }"></span>
+              </button>
+              <button class="share-menu-item" @click="shareUrl('youtube')" data-test="share-youtube">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.8 15.5V8.5l6.3 3.5-6.3 3.5z"/>
                 </svg>
                 {{ t.shareYouTube }}
               </button>
-              <button class="share-menu-item" @click="shareUrl('app')">
+              <button class="share-menu-item" @click="shareUrl('app')" data-test="share-app">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>

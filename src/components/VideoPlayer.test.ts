@@ -5,6 +5,7 @@ import { useSettings } from '@/composables/useSettings';
 import VideoPlayer from './VideoPlayer.vue';
 
 let onVideoEnd: () => void;
+let currentTime = 0;
 
 vi.mock('@/composables/useYTPlayer', () => ({
   useYTPlayer: (onEnd: () => void) => {
@@ -13,7 +14,7 @@ vi.mock('@/composables/useYTPlayer', () => ({
       loadYTApi: () => Promise.resolve(),
       createPlayer: () => {},
       destroyPlayer: () => {},
-      getCurrentTime: () => 0,
+      getCurrentTime: () => currentTime,
       seekTo: () => {}
     };
   }
@@ -140,5 +141,94 @@ describe('VideoPlayer autoplay', () => {
     const wrapper = await mountPlayer({ video: video('a') });
     onVideoEnd();
     expect(wrapper.emitted('play-next')).toBeUndefined();
+  });
+});
+
+describe('VideoPlayer share menu', () => {
+  const openShareMenu = async (wrapper: VueWrapper) => {
+    await wrapper.find('[data-test="share-btn"]').trigger('click');
+  };
+  const startTimeToggle = (wrapper: VueWrapper) => wrapper.find('[data-test="share-start-toggle"]');
+  const sharedUrl = (wrapper: VueWrapper) => wrapper.emitted('share')?.[0]?.[0];
+
+  beforeEach(() => {
+    videoDetails = null;
+    currentTime = 0;
+  });
+
+  it('shares from the start of the video by default', async () => {
+    currentTime = 134;
+    const wrapper = await mountPlayer({ video: video('a') });
+    await openShareMenu(wrapper);
+
+    await wrapper.find('[data-test="share-youtube"]').trigger('click');
+
+    expect(sharedUrl(wrapper)).toBe('https://www.youtube.com/watch?v=a');
+  });
+
+  it('shares a youtube link at the current time once the toggle is on', async () => {
+    currentTime = 134;
+    const wrapper = await mountPlayer({ video: video('a') });
+    await openShareMenu(wrapper);
+    await startTimeToggle(wrapper).trigger('click');
+
+    await wrapper.find('[data-test="share-youtube"]').trigger('click');
+
+    expect(sharedUrl(wrapper)).toBe('https://www.youtube.com/watch?v=a&t=134s');
+  });
+
+  it('shares an app link at the current time once the toggle is on', async () => {
+    currentTime = 134;
+    const wrapper = await mountPlayer({ video: video('a') });
+    await openShareMenu(wrapper);
+    await startTimeToggle(wrapper).trigger('click');
+
+    await wrapper.find('[data-test="share-app"]').trigger('click');
+
+    expect(sharedUrl(wrapper)).toBe(`${window.location.origin}/?v=a&t=134`);
+  });
+
+  it('labels the toggle with the time the menu was opened at', async () => {
+    currentTime = 134;
+    const wrapper = await mountPlayer({ video: video('a') });
+
+    await openShareMenu(wrapper);
+
+    expect(startTimeToggle(wrapper).text()).toContain('2:14');
+  });
+
+  it('shares the time the menu was opened at, not the time it was clicked at', async () => {
+    currentTime = 134;
+    const wrapper = await mountPlayer({ video: video('a') });
+    await openShareMenu(wrapper);
+    currentTime = 900;
+    await startTimeToggle(wrapper).trigger('click');
+
+    await wrapper.find('[data-test="share-youtube"]').trigger('click');
+
+    expect(sharedUrl(wrapper)).toBe('https://www.youtube.com/watch?v=a&t=134s');
+  });
+
+  it('forgets the toggle when the menu is reopened', async () => {
+    currentTime = 134;
+    const wrapper = await mountPlayer({ video: video('a') });
+    await openShareMenu(wrapper);
+    await startTimeToggle(wrapper).trigger('click');
+    await wrapper.find('[data-test="share-youtube"]').trigger('click');
+
+    await openShareMenu(wrapper);
+
+    expect(startTimeToggle(wrapper).attributes('aria-checked')).toBe('false');
+  });
+
+  it('closes the menu when the video changes, so the frozen time cannot outlive it', async () => {
+    currentTime = 134;
+    const wrapper = await mountPlayer({ video: video('a') });
+    await openShareMenu(wrapper);
+    await startTimeToggle(wrapper).trigger('click');
+
+    await wrapper.setProps({ video: video('b') });
+
+    expect(wrapper.find('[data-test="share-youtube"]').exists()).toBe(false);
   });
 });
