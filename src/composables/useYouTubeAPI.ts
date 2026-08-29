@@ -1,5 +1,6 @@
 import type { Video, VideoDetails, VideoComment } from '@/types';
 import type { TrackSeed } from '@/utils/music';
+import type { TranscriptSegment } from '@/utils/transcript';
 import { INTEREST_CONFIG } from '@/utils/youtube-categories';
 import { PAGE_SIZE, RECOMMENDATION_BUFFER, FAVORITES_FEED_DAYS } from '@/utils/constants';
 import { chunkChannels, mergeRecentVideos } from '@/utils/feed';
@@ -27,6 +28,15 @@ interface RadioResult {
   seed: TrackSeed;
   videos: Video[];
 }
+
+export type TranscriptResponse =
+  | { status: 'ok'; segments: TranscriptSegment[] }
+  | { status: 'pending'; retryAfter: number }
+  | { status: 'quota' }
+  | { status: 'error' };
+
+/** Fallback wait when the server doesn't say how long. */
+const TRANSCRIPT_DEFAULT_RETRY = 5;
 
 const fetchApi = async (path: string): Promise<Response> => {
   const response = await fetch(`${API_BASE}${path}`);
@@ -221,6 +231,29 @@ export const useYouTubeAPI = () => {
     };
   };
 
+  /**
+   * Does not go through `fetchApi`: here 202, 429 and 503 are not failures but states the
+   * panel shows the user, and `fetchApi` would turn them into indistinguishable exceptions.
+   */
+  const getTranscript = async (videoId: string): Promise<TranscriptResponse> => {
+    try {
+      const params = new URLSearchParams({ videoId });
+      const response = await fetch(`${API_BASE}/transcript?${params}`);
+
+      if (response.status === 202) {
+        const data = await response.json() as { retryAfter?: number };
+        return { status: 'pending', retryAfter: data.retryAfter ?? TRANSCRIPT_DEFAULT_RETRY };
+      }
+      if (response.status === 429) return { status: 'quota' };
+      if (!response.ok) return { status: 'error' };
+
+      const data = await response.json() as { segments?: TranscriptSegment[] };
+      return { status: 'ok', segments: data.segments || [] };
+    } catch {
+      return { status: 'error' };
+    }
+  };
+
   return {
     searchVideos,
     searchByChannel,
@@ -230,5 +263,6 @@ export const useYouTubeAPI = () => {
     getVideoDetails,
     getVideoComments,
     getSimilarTracks,
+    getTranscript,
   };
 };

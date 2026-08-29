@@ -87,3 +87,65 @@ describe('getSimilarTracks', () => {
       .rejects.toThrow('API error: 500');
   });
 });
+
+describe('getTranscript', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns the segments of a video that has a transcript', async () => {
+    respondWith({ videoId: 'abc', lang: 'it', segments: [{ start: 0, dur: 1, text: 'ciao' }] });
+
+    const result = await useYouTubeAPI().getTranscript('abc');
+
+    expect(result).toEqual({ status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] });
+  });
+
+  it('sends the video id as a query parameter', async () => {
+    const fetchMock = respondWith({ videoId: 'abc', lang: 'it', segments: [] });
+
+    await useYouTubeAPI().getTranscript('abc');
+
+    expect(requestedUrl(fetchMock).searchParams.get('videoId')).toBe('abc');
+  });
+
+  it('returns an empty list for a video without subtitles', async () => {
+    respondWith({ videoId: 'abc', lang: '', segments: [] });
+
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'ok', segments: [] });
+  });
+
+  it('reports a transcript still being prepared, with the wait it was given', async () => {
+    respondWith({ status: 'pending', retryAfter: 7 }, true, 202);
+
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'pending', retryAfter: 7 });
+  });
+
+  it('falls back to a default wait when none is given', async () => {
+    respondWith({ status: 'pending' }, true, 202);
+
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'pending', retryAfter: 5 });
+  });
+
+  it('distinguishes an exhausted quota from a failure', async () => {
+    respondWith({ error: 'quota' }, false, 429);
+
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'quota' });
+  });
+
+  it('reports any other failure as an error', async () => {
+    respondWith({ error: 'unavailable' }, false, 503);
+
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'error' });
+  });
+
+  it('reports a network failure as an error instead of throwing', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    expect(await useYouTubeAPI().getTranscript('abc')).toEqual({ status: 'error' });
+  });
+});
