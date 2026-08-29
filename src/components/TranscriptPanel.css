@@ -1,5 +1,13 @@
+.transcript-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .transcript-toolbar {
   display: flex;
+  flex-shrink: 0;
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -32,10 +40,11 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  /* A flat 420px is two thirds of a 360x640 phone, which buries a scroll area inside a page
-     that is already scrolling. Capping it against the viewport keeps the list a panel rather
-     than a second page, and leaves the 420px ceiling in place on a tall screen. */
-  max-height: min(420px, 45vh);
+  /* The list is the only part of the panel that scrolls: it takes whatever height the tab
+     pane leaves under the toolbar, the way the comments list fills its pane. `min-height: 0`
+     lets it shrink below its content instead of pushing the pane taller. */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 

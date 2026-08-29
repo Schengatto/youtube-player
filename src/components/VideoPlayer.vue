@@ -564,7 +564,7 @@ const formatCount = (count: string): string => {
             <p v-else class="no-data">{{ t.noBookmarks }}</p>
           </div>
 
-          <div v-if="activeTab === 'transcript'" class="tab-content">
+          <div v-if="activeTab === 'transcript'" class="tab-content fill">
             <TranscriptPanel
               :segments="transcriptSegments"
               :current-time="transcriptTime"

@@ -354,6 +354,14 @@
   overflow-y: auto;
 }
 
+/* A tab whose own content scrolls (the transcript) hands it the full height instead of
+   scrolling twice: the pane stops scrolling and becomes a column its child can stretch into. */
+.tab-content.fill {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .tab-content::-webkit-scrollbar { width: 6px; }
 .tab-content::-webkit-scrollbar-track { background: transparent; }
 .tab-content::-webkit-scrollbar-thumb { background: var(--white-15); border-radius: 3px; }
