@@ -1,4 +1,5 @@
 export interface TranscriptSegment {
+  /** Seconds, same unit as `seekTo` and existing bookmarks. */
   start: number;
   dur: number;
   text: string;
@@ -6,6 +7,7 @@ export interface TranscriptSegment {
 
 export type TranscriptStatus = 'loading' | 'pending' | 'ok' | 'empty' | 'quota' | 'error';
 
+/** Binary search: called on every tick of the polling timer, so it needs to stay cheap. */
 export function findActiveIndex(segments: TranscriptSegment[], t: number): number {
   let left = 0;
   let right = segments.length - 1;
