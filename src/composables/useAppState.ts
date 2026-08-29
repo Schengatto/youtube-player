@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import type { Video } from '@/types';
 import type { TrackSeed } from '@/utils/music';
 import type { Locale } from '@/i18n/translations';
@@ -255,6 +255,37 @@ export const useAppState = () => {
     playbackSource.value = 'none';
   };
 
+  const videoIdInUrl = () => new URLSearchParams(window.location.search).get('v');
+
+  /**
+   * The query owns the open video, so a reload reopens it. Opening pushes a history entry
+   * (Back walks the queue and eventually leaves the player), closing only replaces the
+   * current one, or the first Back would reopen what was just closed.
+   */
+  const syncUrlToVideo = (video: Video | null) => {
+    if (!video) {
+      if (videoIdInUrl()) window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+    // Already there when we opened from a link or from Back: pushing would duplicate the entry.
+    if (videoIdInUrl() === video.videoId) return;
+    window.history.pushState({}, '', `${window.location.pathname}?v=${video.videoId}`);
+  };
+
+  const syncVideoToUrl = () => {
+    const videoId = videoIdInUrl();
+    if (!videoId) {
+      handleCloseVideo();
+      return;
+    }
+    if (selectedVideo.value?.videoId === videoId) return;
+    selectedVideo.value = playbackQueue.value.find(v => v.videoId === videoId) ?? getVideoFromId(videoId);
+  };
+
+  watch(selectedVideo, syncUrlToVideo);
+  onMounted(() => window.addEventListener('popstate', syncVideoToUrl));
+  onUnmounted(() => window.removeEventListener('popstate', syncVideoToUrl));
+
   const handleMinimize = () => {
     releaseDocFullscreen();
     isMinimized.value = true;
@@ -452,8 +483,9 @@ export const useAppState = () => {
       if (timeParam) {
         pendingStartTime.value = parseInt(timeParam, 10) || null;
       }
-      window.history.replaceState({}, '', window.location.pathname);
-      return;
+      // The query is left alone: it is what makes a reload reopen this video. No early return
+      // either, so the feed still loads behind the player and closing it does not land on a
+      // blank home.
     }
     // Android share target: the shared link arrives as `url`, or inside `text` for apps
     // that only fill EXTRA_TEXT (the YouTube app being one of them).

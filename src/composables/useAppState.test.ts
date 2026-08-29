@@ -42,6 +42,17 @@ const mountAppState = () => {
   return state;
 };
 
+// The open video lives in the query, so a test that plays one leaves it there for the next mount.
+beforeEach(() => {
+  window.history.replaceState({}, '', '/');
+});
+
+/** jsdom fires popstate asynchronously, so wait for the event instead of a fixed tick. */
+const goBack = () => new Promise<void>((resolve) => {
+  window.addEventListener('popstate', () => resolve(), { once: true });
+  window.history.back();
+});
+
 describe('startRadio', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -137,5 +148,86 @@ describe('startRadio', () => {
     await first;
 
     expect(getSimilarTracks).toHaveBeenCalledOnce();
+  });
+});
+
+describe('video URL', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  it('puts the open video in the query so a reload reopens it', async () => {
+    const state = mountAppState();
+    await flushPromises();
+
+    state.handlePlayVideo(video('abc'));
+    await flushPromises();
+
+    expect(window.location.search).toBe('?v=abc');
+  });
+
+  it('adds a history entry per video, so Back walks the queue', async () => {
+    const state = mountAppState();
+    await flushPromises();
+    const before = window.history.length;
+
+    state.handlePlayVideo(video('abc'));
+    await flushPromises();
+    state.handlePlayVideo(video('def'));
+    await flushPromises();
+
+    expect(window.history.length).toBe(before + 2);
+  });
+
+  it('clears the query when the player is closed', async () => {
+    const state = mountAppState();
+    await flushPromises();
+    state.handlePlayVideo(video('abc'));
+    await flushPromises();
+    const afterOpen = window.history.length;
+
+    state.handleCloseVideo();
+    await flushPromises();
+
+    expect(window.location.search).toBe('');
+    // Replaced, not pushed: otherwise the first Back would reopen what was just closed.
+    expect(window.history.length).toBe(afterOpen);
+  });
+
+  it('does not duplicate the history entry when starting on ?v=', async () => {
+    window.history.replaceState({}, '', '/?v=abc');
+    const before = window.history.length;
+
+    const state = mountAppState();
+    await flushPromises();
+
+    expect(state.selectedVideo.value?.videoId).toBe('abc');
+    expect(window.history.length).toBe(before);
+  });
+
+  it('reopens the video the URL went back to', async () => {
+    const state = mountAppState();
+    await flushPromises();
+    state.handlePlayVideo(video('abc'));
+    await flushPromises();
+    state.handlePlayVideo(video('def'));
+    await flushPromises();
+
+    await goBack();
+
+    expect(window.location.search).toBe('?v=abc');
+    expect(state.selectedVideo.value?.videoId).toBe('abc');
+  });
+
+  it('closes the player when the URL goes back to a page without a video', async () => {
+    const state = mountAppState();
+    await flushPromises();
+    state.handlePlayVideo(video('abc'));
+    await flushPromises();
+
+    await goBack();
+
+    expect(state.selectedVideo.value).toBeNull();
   });
 });
