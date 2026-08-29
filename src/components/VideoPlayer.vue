@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
 import type { Video, VideoDetails, VideoComment } from '@/types';
 import { useYouTubeAPI } from '@/composables/useYouTubeAPI';
 import { useYTPlayer } from '@/composables/useYTPlayer';
@@ -10,6 +10,9 @@ import { nextIn, previousIn } from '@/utils/queue';
 import { formatRelativeTime } from '@/utils/date';
 import { getChannelUrl, getChannelSubscribeUrl, buildVideoShareUrl } from '@/utils/youtube';
 import { musicSeed, type TrackSeed } from '@/utils/music';
+import TranscriptPanel from './TranscriptPanel.vue';
+import type { TranscriptSegment, TranscriptStatus } from '@/utils/transcript';
+import { TRANSCRIPT_MAX_RETRIES, TRANSCRIPT_HIGHLIGHT_INTERVAL } from '@/utils/constants';
 
 const { t } = useI18n();
 const { addBookmark, removeBookmark, getVideoBookmarks, formatTimestamp } = useBookmarks();
@@ -91,7 +94,7 @@ const isLoadingDetails = ref(false);
 const isLoadingComments = ref(false);
 const isLoadingMoreComments = ref(false);
 const showDescription = ref(false);
-const activeTab = ref<'comments' | 'bookmarks'>('comments');
+const activeTab = ref<'comments' | 'bookmarks' | 'transcript'>('comments');
 const commentsError = ref(false);
 const playerReady = ref(false);
 const showBookmarkForm = ref(false);
@@ -135,6 +138,76 @@ const handleDeleteBookmark = (id: string) => {
   removeBookmark(id);
 };
 
+const transcriptSegments = ref<TranscriptSegment[]>([]);
+const transcriptStatus = ref<TranscriptStatus>('loading');
+const transcriptTime = ref(0);
+let transcriptLoaded = false;
+let transcriptRetries = 0;
+let transcriptTimer: ReturnType<typeof setTimeout> | null = null;
+let highlightTimer: ReturnType<typeof setInterval> | null = null;
+
+const stopHighlight = () => {
+  if (highlightTimer) { clearInterval(highlightTimer); highlightTimer = null; }
+};
+
+const stopTranscriptTimers = () => {
+  if (transcriptTimer) { clearTimeout(transcriptTimer); transcriptTimer = null; }
+  stopHighlight();
+};
+
+const startHighlight = () => {
+  if (highlightTimer) return;
+  highlightTimer = setInterval(() => {
+    transcriptTime.value = getCurrentTime();
+  }, TRANSCRIPT_HIGHLIGHT_INTERVAL);
+};
+
+const loadTranscript = async () => {
+  if (!props.video) return;
+  const result = await useYouTubeAPI().getTranscript(props.video.videoId);
+
+  if (result.status === 'pending') {
+    if (transcriptRetries >= TRANSCRIPT_MAX_RETRIES) {
+      transcriptStatus.value = 'error';
+      return;
+    }
+    transcriptRetries += 1;
+    transcriptStatus.value = 'pending';
+    transcriptTimer = setTimeout(loadTranscript, result.retryAfter * 1000);
+    return;
+  }
+
+  if (result.status === 'ok') {
+    transcriptSegments.value = result.segments;
+    // The server answers a video without subtitles as a normal success (segments: []):
+    // that must land in the panel's empty state, not its ok state.
+    transcriptStatus.value = result.segments.length > 0 ? 'ok' : 'empty';
+    if (result.segments.length > 0 && activeTab.value === 'transcript') startHighlight();
+    return;
+  }
+
+  transcriptStatus.value = result.status === 'quota' ? 'quota' : 'error';
+};
+
+/** The fetch starts only here: whoever never opens the tab never consumes anything. */
+const openTranscriptTab = () => {
+  activeTab.value = 'transcript';
+  if (transcriptStatus.value === 'ok') startHighlight();
+  if (transcriptLoaded) return;
+  transcriptLoaded = true;
+  transcriptStatus.value = 'loading';
+  loadTranscript();
+};
+
+const selectTab = (tab: 'comments' | 'bookmarks') => {
+  activeTab.value = tab;
+  stopHighlight();
+};
+
+onUnmounted(() => {
+  stopTranscriptTimers();
+});
+
 watch(() => props.video, async (newVideo) => {
   details.value = null;
   comments.value = [];
@@ -144,6 +217,12 @@ watch(() => props.video, async (newVideo) => {
   commentsError.value = false;
   playerReady.value = false;
   showShareMenu.value = false;
+  stopTranscriptTimers();
+  transcriptSegments.value = [];
+  transcriptStatus.value = 'loading';
+  transcriptTime.value = 0;
+  transcriptLoaded = false;
+  transcriptRetries = 0;
 
   if (newVideo) {
     await loadYTApi();
@@ -363,13 +442,16 @@ const formatCount = (count: string): string => {
 
         <div v-if="!isMinimized" class="player-details">
           <div class="tabs">
-            <button :class="['tab', { active: activeTab === 'comments' }]" @click="activeTab = 'comments'">
+            <button :class="['tab', { active: activeTab === 'comments' }]" @click="selectTab('comments')">
               {{ t.comments }}
               <span v-if="details" class="tab-count">{{ formatCount(details.commentCount) }}</span>
             </button>
-            <button :class="['tab', { active: activeTab === 'bookmarks' }]" @click="activeTab = 'bookmarks'">
+            <button :class="['tab', { active: activeTab === 'bookmarks' }]" @click="selectTab('bookmarks')">
               {{ t.bookmarks }}
               <span v-if="videoBookmarks.length > 0" class="tab-count">{{ videoBookmarks.length }}</span>
+            </button>
+            <button :class="['tab', { active: activeTab === 'transcript' }]" @click="openTranscriptTab">
+              {{ t.transcript }}
             </button>
           </div>
 
@@ -435,6 +517,15 @@ const formatCount = (count: string): string => {
               </div>
             </div>
             <p v-else class="no-data">{{ t.noBookmarks }}</p>
+          </div>
+
+          <div v-if="activeTab === 'transcript'" class="tab-content">
+            <TranscriptPanel
+              :segments="transcriptSegments"
+              :current-time="transcriptTime"
+              :status="transcriptStatus"
+              @seek="handleSeekToBookmark"
+            />
           </div>
         </div>
       </div>

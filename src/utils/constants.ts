@@ -44,3 +44,8 @@ export const FAVORITES_FEED_DAYS = 7;
 export const FAVORITES_FEED_CHUNK_SIZE = 20;
 export const FAVORITES_FEED_MAX_VIDEOS = 60;
 export const RECOMMENDATION_BUFFER = 20;
+
+/** Beyond this many attempts a transcript still being prepared is given up on. */
+export const TRANSCRIPT_MAX_RETRIES = 12;
+/** Milliseconds between two reads of the player position for highlighting. */
+export const TRANSCRIPT_HIGHLIGHT_INTERVAL = 500;

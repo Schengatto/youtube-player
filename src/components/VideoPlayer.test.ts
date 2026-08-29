@@ -6,6 +6,7 @@ import VideoPlayer from './VideoPlayer.vue';
 
 let onVideoEnd: () => void;
 let currentTime = 0;
+let seeked: number[] = [];
 
 vi.mock('@/composables/useYTPlayer', () => ({
   useYTPlayer: (onEnd: () => void) => {
@@ -15,17 +16,19 @@ vi.mock('@/composables/useYTPlayer', () => ({
       createPlayer: () => {},
       destroyPlayer: () => {},
       getCurrentTime: () => currentTime,
-      seekTo: () => {}
+      seekTo: (seconds: number) => { seeked.push(seconds); }
     };
   }
 }));
 
 let videoDetails: VideoDetails | null = null;
+let transcriptResponses: unknown[] = [];
 
 vi.mock('@/composables/useYouTubeAPI', () => ({
   useYouTubeAPI: () => ({
     getVideoDetails: () => Promise.resolve(videoDetails),
-    getVideoComments: () => Promise.resolve({ comments: [], nextPageToken: undefined })
+    getVideoComments: () => Promise.resolve({ comments: [], nextPageToken: undefined }),
+    getTranscript: () => Promise.resolve(transcriptResponses.shift() ?? { status: 'ok', segments: [] })
   })
 }));
 
@@ -230,5 +233,138 @@ describe('VideoPlayer share menu', () => {
     await wrapper.setProps({ video: video('b') });
 
     expect(wrapper.find('[data-test="share-youtube"]').exists()).toBe(false);
+  });
+});
+
+describe('transcript tab', () => {
+  const openTranscript = async (wrapper: VueWrapper) => {
+    const tab = wrapper.findAll('.tab').find(button => button.text().includes('Transcript'));
+    await tab!.trigger('click');
+    await flushPromises();
+  };
+
+  beforeEach(() => {
+    videoDetails = null;
+    currentTime = 0;
+    transcriptResponses = [];
+    seeked = [];
+  });
+
+  it('does not ask for the transcript until the tab is opened', async () => {
+    transcriptResponses = [];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+
+    expect(wrapper.find('.transcript-panel').exists()).toBe(false);
+  });
+
+  it('shows the lines once the tab is opened', async () => {
+    transcriptResponses = [{ status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] }];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+
+    await openTranscript(wrapper);
+
+    expect(wrapper.findAll('.transcript-line')).toHaveLength(1);
+  });
+
+  it('maps a successful response with zero segments to the empty state, not the ok state', async () => {
+    transcriptResponses = [{ status: 'ok', segments: [] }];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+
+    await openTranscript(wrapper);
+
+    expect(wrapper.text()).toContain('No transcript available');
+    // The toolbar (search box, copy button) only renders in the 'ok' state: its absence
+    // proves the empty segments array landed in 'empty', not 'ok' with an empty list.
+    expect(wrapper.find('.transcript-search').exists()).toBe(false);
+  });
+
+  it('retries a transcript still being prepared and then shows it', async () => {
+    vi.useFakeTimers();
+    transcriptResponses = [
+      { status: 'pending', retryAfter: 1 },
+      { status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] },
+    ];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    expect(wrapper.text()).toContain('Preparing transcript');
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushPromises();
+
+    expect(wrapper.findAll('.transcript-line')).toHaveLength(1);
+    vi.useRealTimers();
+  });
+
+  it('gives up after too many retries instead of waiting for ever', async () => {
+    vi.useFakeTimers();
+    transcriptResponses = Array.from({ length: 20 }, () => ({ status: 'pending', retryAfter: 1 }));
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    await vi.advanceTimersByTimeAsync(20000);
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Could not load the transcript');
+    vi.useRealTimers();
+  });
+
+  it('seeks the player when a line is clicked', async () => {
+    transcriptResponses = [{ status: 'ok', segments: [{ start: 42, dur: 1, text: 'ciao' }] }];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    await wrapper.find('.transcript-line').trigger('click');
+
+    expect(seeked).toEqual([42]);
+  });
+
+  it('goes back to the comments and forgets the transcript on a new video', async () => {
+    transcriptResponses = [{ status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] }];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    await wrapper.setProps({ video: video('b') });
+    await flushPromises();
+
+    expect(wrapper.find('.transcript-panel').exists()).toBe(false);
+  });
+
+  it('stops the highlight interval when the tab is left, leaving no leaked timer', async () => {
+    vi.useFakeTimers();
+    transcriptResponses = [{ status: 'ok', segments: [{ start: 0, dur: 1, text: 'ciao' }] }];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+    const commentsTab = wrapper.findAll('.tab').find(button => button.text().includes('comments'));
+    await commentsTab!.trigger('click');
+
+    expect(clearIntervalSpy).toHaveBeenCalled();
+    clearIntervalSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it('clears every pending transcript timer on unmount', async () => {
+    vi.useFakeTimers();
+    transcriptResponses = [{ status: 'pending', retryAfter: 1 }];
+    const wrapper = mount(VideoPlayer, { props: { video: video('a'), isMinimized: false } });
+    await flushPromises();
+    await openTranscript(wrapper);
+
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+    wrapper.unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    clearTimeoutSpy.mockRestore();
+    vi.useRealTimers();
   });
 });
