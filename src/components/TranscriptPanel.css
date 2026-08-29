@@ -1,0 +1,74 @@
+.transcript-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.transcript-search {
+  flex: 1;
+}
+
+.transcript-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--white-10);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.transcript-copy {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--white-10);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.transcript-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.transcript-line {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.transcript-line:hover {
+  background: var(--white-10);
+}
+
+.transcript-line.active {
+  background: var(--accent-15);
+  font-weight: 600;
+}
+
+.transcript-time {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.no-data {
+  color: var(--text-faint);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1.5rem 0;
+}
