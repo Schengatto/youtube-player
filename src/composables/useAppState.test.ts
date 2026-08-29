@@ -231,3 +231,69 @@ describe('video URL', () => {
     expect(state.selectedVideo.value).toBeNull();
   });
 });
+
+/**
+ * A video reopened from a bare ?v= id is a placeholder: fake title, no channel at all. The
+ * player fetches the details anyway, so it hands back the identity they carry and the
+ * placeholder completes itself — the follow and subscribe buttons come back with it.
+ */
+describe('resolveVideoIdentity', () => {
+  const identity = { videoId: 'abc', title: 'Real title', channel: 'Real channel', channelId: 'UC1' };
+
+  it('completes a video reopened from a bare id', async () => {
+    window.history.replaceState({}, '', '/?v=abc');
+    const state = mountAppState();
+    await flushPromises();
+
+    state.resolveVideoIdentity(identity);
+
+    expect(state.selectedVideo.value).toMatchObject(identity);
+  });
+
+  it('drops the placeholder mark once the real identity is in', async () => {
+    window.history.replaceState({}, '', '/?v=abc');
+    const state = mountAppState();
+    await flushPromises();
+
+    state.resolveVideoIdentity(identity);
+
+    expect(state.selectedVideo.value?.isPlaceholder).toBeUndefined();
+  });
+
+  it('leaves a video opened from the feed untouched', async () => {
+    const state = mountAppState();
+    await flushPromises();
+    state.handlePlayVideo(video('abc'));
+    await flushPromises();
+
+    state.resolveVideoIdentity(identity);
+
+    expect(state.selectedVideo.value?.title).toBe('Video abc');
+  });
+
+  // The details of the previous video can land after the user has already moved on.
+  it('ignores an identity for a video that is no longer open', async () => {
+    window.history.replaceState({}, '', '/?v=def');
+    const state = mountAppState();
+    await flushPromises();
+
+    state.resolveVideoIdentity(identity);
+
+    expect(state.selectedVideo.value?.videoId).toBe('def');
+    expect(state.selectedVideo.value?.title).not.toBe('Real title');
+  });
+
+  // Replacing the open video re-runs the URL sync, which must recognise the video as the one
+  // already in the query instead of pushing a second entry for it.
+  it('does not add a history entry', async () => {
+    window.history.replaceState({}, '', '/?v=abc');
+    const state = mountAppState();
+    await flushPromises();
+    const before = window.history.length;
+
+    state.resolveVideoIdentity(identity);
+    await flushPromises();
+
+    expect(window.history.length).toBe(before);
+  });
+});

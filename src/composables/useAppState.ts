@@ -1,5 +1,5 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import type { Video } from '@/types';
+import type { Video, VideoIdentity } from '@/types';
 import type { TrackSeed } from '@/utils/music';
 import type { Locale } from '@/i18n/translations';
 import { useSettings } from '@/composables/useSettings';
@@ -282,6 +282,18 @@ export const useAppState = () => {
     selectedVideo.value = playbackQueue.value.find(v => v.videoId === videoId) ?? getVideoFromId(videoId);
   };
 
+  /**
+   * The player has learned who published the video it is showing. Only a placeholder needs it —
+   * a video opened from the feed already carries its own identity, and the details of a video
+   * the user has since left behind must not overwrite the one now open.
+   */
+  const resolveVideoIdentity = (identity: VideoIdentity) => {
+    const video = selectedVideo.value;
+    if (!video?.isPlaceholder || video.videoId !== identity.videoId) return;
+    const { isPlaceholder: _wasPlaceholder, ...rest } = video;
+    selectedVideo.value = { ...rest, ...identity };
+  };
+
   watch(selectedVideo, syncUrlToVideo);
   onMounted(() => window.addEventListener('popstate', syncVideoToUrl));
   onUnmounted(() => window.removeEventListener('popstate', syncVideoToUrl));
@@ -538,7 +550,7 @@ export const useAppState = () => {
     handleRemoveSavedVideo, handleClearAllSavedVideos,
     handleAddToPlaylist, handleTogglePlaylist, handleCreatePlaylist,
     handleDeletePlaylist, handlePlaylistPlayVideo, handleSharePlaylist,
-    handlePlayNext, handlePlayPrevious,
+    handlePlayNext, handlePlayPrevious, resolveVideoIdentity,
     startRadio, radioSeed, isLoadingRadio,
     pendingImportPlaylist, handleImportPlaylistSave, handleImportPlaylistWatch,
     bookmarks, handleSelectBookmark, handleShareBookmark, handleShareBookmarkFromPanel,

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { parseYouTubeUrl, extractVideoIdFromUrl, extractVideoIdFromSharedText, getChannelUrl, getChannelSubscribeUrl, buildVideoShareUrl } from './youtube';
+import { parseYouTubeUrl, extractVideoIdFromUrl, extractVideoIdFromSharedText, getChannelUrl, getChannelSubscribeUrl, buildVideoShareUrl, getVideoFromId } from './youtube';
 
 describe('parseYouTubeUrl', () => {
   it('reads the v param from a watch url', () => {
@@ -149,5 +149,13 @@ describe('buildVideoShareUrl', () => {
   it('omits the start time when there is none', () => {
     expect(buildVideoShareUrl('dQw4w9WgXcQ', 'app', null))
       .toBe(`${window.location.origin}/?v=dQw4w9WgXcQ`);
+  });
+});
+
+describe('getVideoFromId', () => {
+  // Nothing in it comes from YouTube, and the rest of the app has to be able to tell:
+  // the title is a stand-in and the channel is unknown until the details arrive.
+  it('marks the video as a placeholder', () => {
+    expect(getVideoFromId('dQw4w9WgXcQ').isPlaceholder).toBe(true);
   });
 });

@@ -41,7 +41,7 @@ const {
   handleRemoveSavedVideo, handleClearAllSavedVideos,
   handleAddToPlaylist, handleTogglePlaylist, handleCreatePlaylist,
   handleDeletePlaylist, handlePlaylistPlayVideo, handleSharePlaylist,
-  handlePlayNext, handlePlayPrevious,
+  handlePlayNext, handlePlayPrevious, resolveVideoIdentity,
   startRadio, radioSeed, isLoadingRadio,
   pendingImportPlaylist, handleImportPlaylistSave, handleImportPlaylistWatch,
   bookmarks, handleSelectBookmark, handleShareBookmark, handleShareBookmarkFromPanel,
@@ -259,7 +259,7 @@ const {
       @close="handleCloseVideo" @share="handleShare" @share-bookmark="handleShareBookmark"
       @minimize="handleMinimize" @maximize="handleMaximize"
       @play-next="handlePlayNext" @play-previous="handlePlayPrevious"
-      @radio-requested="startRadio" />
+      @radio-requested="startRadio" @identity-resolved="resolveVideoIdentity" />
 
     <PreferencesModal :show="showPreferencesModal" :current-interests="userPreferences.interests"
       :has-preferences="hasPreferences" @close="showPreferencesModal = false" @save="handleSavePreferences" />

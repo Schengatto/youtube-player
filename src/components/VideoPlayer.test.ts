@@ -499,3 +499,25 @@ describe('transcript tab', () => {
     vi.useRealTimers();
   });
 });
+
+/**
+ * A video opened from a bare ?v= id knows nothing about itself. The details call the player
+ * already makes carries the real identity, so the player passes it up rather than letting the
+ * app show a placeholder title and hide the channel buttons.
+ */
+describe('VideoPlayer identity', () => {
+  it('hands up the identity the details carry', async () => {
+    videoDetails = { ...detailsWith(), title: 'Real title', channel: 'Real channel', channelId: 'UC1' };
+    const wrapper = await mountPlayer({ video: video('abc') });
+    expect(wrapper.emitted('identity-resolved')?.[0]).toEqual([
+      { videoId: 'abc', title: 'Real title', channel: 'Real channel', channelId: 'UC1' }
+    ]);
+  });
+
+  // The fallback path does not report the channel, and half an identity is worse than none.
+  it('stays quiet when the details carry no channel', async () => {
+    videoDetails = detailsWith();
+    const wrapper = await mountPlayer({ video: video('abc') });
+    expect(wrapper.emitted('identity-resolved')).toBeUndefined();
+  });
+});

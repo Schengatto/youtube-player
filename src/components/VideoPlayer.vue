@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
-import type { Video, VideoDetails, VideoComment } from '@/types';
+import type { Video, VideoDetails, VideoComment, VideoIdentity } from '@/types';
 import { useYouTubeAPI } from '@/composables/useYouTubeAPI';
 import { useYTPlayer } from '@/composables/useYTPlayer';
 import { useBookmarks } from '@/composables/useBookmarks';
@@ -37,6 +37,7 @@ const emit = defineEmits<{
   'play-previous': [];
   'share-bookmark': [url: string];
   'radio-requested': [seed: TrackSeed];
+  'identity-resolved': [identity: VideoIdentity];
 }>();
 
 const showShareMenu = ref(false);
@@ -274,6 +275,18 @@ watch(() => props.video, async (newVideo) => {
 
     details.value = detailsResult;
     isLoadingDetails.value = false;
+
+    // A video opened from a bare id arrives with a stand-in title and no channel. These details
+    // carry the real ones, so pass them up; half an identity is worse than none, hence the &&.
+    if (detailsResult?.title && detailsResult.channel && detailsResult.channelId) {
+      emit('identity-resolved', {
+        videoId: newVideo.videoId,
+        title: detailsResult.title,
+        channel: detailsResult.channel,
+        channelId: detailsResult.channelId
+      });
+    }
+
     comments.value = commentsResult.comments;
     commentsPageToken.value = commentsResult.nextPageToken;
     commentsError.value = commentsResult.comments.length === 0 && !commentsResult.nextPageToken;

@@ -1,3 +1,5 @@
+import type { Video } from '@/types';
+
 const YOUTUBE_PATH_ID_PATTERN = /^\/(?:shorts|live|embed)\/([^/]+)/;
 const URL_IN_TEXT_PATTERN = /https?:\/\/\S+/g;
 const TRAILING_PUNCTUATION_PATTERN = /[.,;:!?)\]]+$/;
@@ -79,13 +81,14 @@ export const buildVideoShareUrl = (
   return `${base}&t=${seconds}${target === 'youtube' ? 's' : ''}`;
 };
 
-export const getVideoFromId = (videoId: string) => {
+export const getVideoFromId = (videoId: string): Video => {
   return {
     title: 'Video YouTube',
     videoId,
     thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
     channel: 'YouTube',
     channelId: undefined,
-    publishedAt: undefined
+    publishedAt: undefined,
+    isPlaceholder: true
   };
 };
