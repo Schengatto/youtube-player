@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils';
 import type { Video, VideoDetails } from '@/types';
 import { useSettings } from '@/composables/useSettings';
@@ -12,13 +12,14 @@ let seeked: number[] = [];
 /** A spy so a test can prove the highlight interval really stopped, not merely that some
  *  clearInterval ran somewhere. */
 const getCurrentTimeMock = vi.fn(() => currentTime);
+const createPlayerMock = vi.fn();
 
 vi.mock('@/composables/useYTPlayer', () => ({
   useYTPlayer: (onEnd: () => void) => {
     onVideoEnd = onEnd;
     return {
       loadYTApi: () => Promise.resolve(),
-      createPlayer: () => {},
+      createPlayer: createPlayerMock,
       destroyPlayer: () => {},
       getCurrentTime: getCurrentTimeMock,
       seekTo: (seconds: number) => { seeked.push(seconds); }
@@ -497,6 +498,22 @@ describe('transcript tab', () => {
 
     expect(wrapper.findAll('.transcript-line')).toHaveLength(1);
     vi.useRealTimers();
+  });
+});
+
+describe('VideoPlayer playback rate', () => {
+  beforeEach(() => {
+    createPlayerMock.mockClear();
+  });
+
+  afterEach(() => {
+    useSettings().setPlaybackRate(1);
+  });
+
+  it('opens a video at the speed chosen in the settings', async () => {
+    useSettings().setPlaybackRate(1.5);
+    await mountPlayer({ video: video('abc') });
+    expect(createPlayerMock).toHaveBeenCalledWith('abc', undefined, 1.5);
   });
 });
 

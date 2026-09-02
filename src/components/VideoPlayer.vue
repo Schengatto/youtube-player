@@ -261,7 +261,7 @@ watch(() => props.video, async (newVideo) => {
     await loadYTApi();
     await nextTick();
     const startSec = props.startTime ?? undefined;
-    createPlayer(newVideo.videoId, startSec);
+    createPlayer(newVideo.videoId, startSec, userPreferences.value.playbackRate);
     playerReady.value = true;
 
     const api = useYouTubeAPI();

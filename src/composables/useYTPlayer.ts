@@ -5,6 +5,7 @@ interface YTPlayer {
   destroy: () => void;
   getCurrentTime: () => number;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  setPlaybackRate: (rate: number) => void;
 }
 
 declare global {
@@ -39,7 +40,7 @@ export const useYTPlayer = (onVideoEnd: () => void, getHasVideo: () => boolean) 
     ytPlayer = null;
   };
 
-  const createPlayer = (videoId: string, startSeconds?: number) => {
+  const createPlayer = (videoId: string, startSeconds?: number, playbackRate?: number) => {
     safeDestroyPlayer();
     const playerVars: Record<string, unknown> = { autoplay: 1, modestbranding: 1, rel: 0, enablejsapi: 1 };
     if (startSeconds && startSeconds > 0) playerVars.start = Math.floor(startSeconds);
@@ -50,6 +51,11 @@ export const useYTPlayer = (onVideoEnd: () => void, getHasVideo: () => boolean) 
       host: 'https://www.youtube-nocookie.com',
       playerVars,
       events: {
+        // playerVars carries no speed, so the chosen one is applied as soon as the player accepts it.
+        onReady: (event: { target: YTPlayer }) => {
+          if (!playbackRate || playbackRate === 1) return;
+          try { event.target.setPlaybackRate(playbackRate); } catch { /* video refuses the speed */ }
+        },
         onStateChange: (event: { data: number }) => {
           if (event.data === 0) onVideoEnd();
         },

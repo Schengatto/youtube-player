@@ -21,8 +21,10 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const { userPreferences, setAutoplay } = useSettings();
+const { userPreferences, setAutoplay, setPlaybackRate } = useSettings();
 const showLanguagePanel = ref(false);
+
+const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 1.75, 2];
 </script>
 
 <template>
@@ -64,6 +66,24 @@ const showLanguagePanel = ref(false);
                 <span class="settings-switch" :class="{ on: userPreferences.autoplay }"></span>
               </button>
               <p class="settings-hint">{{ t.autoplayHint }}</p>
+            </div>
+            <div class="settings-divider"></div>
+            <div class="settings-section">
+              <div class="settings-item settings-item-static">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20a8 8 0 1 1 8-8"></path>
+                  <line x1="12" y1="12" x2="17" y2="9"></line>
+                </svg>
+                <span>{{ t.playbackSpeed }}</span>
+              </div>
+              <div class="settings-speeds" role="radiogroup" :aria-label="t.playbackSpeed">
+                <button v-for="rate in PLAYBACK_RATES" :key="rate" class="settings-speed" role="radio"
+                  :class="{ active: userPreferences.playbackRate === rate }"
+                  :aria-checked="userPreferences.playbackRate === rate"
+                  @click="setPlaybackRate(rate)">{{ rate.toLocaleString(currentLocale) }}&times;</button>
+              </div>
+              <p class="settings-hint">{{ t.playbackSpeedHint }}</p>
             </div>
             <div class="settings-divider"></div>
             <div class="settings-section">

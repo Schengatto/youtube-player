@@ -30,6 +30,7 @@ export interface UserPreferences {
   interests: string[];
   language: string;
   autoplay: boolean;
+  playbackRate: number;
 }
 
 export interface VideoDetails {

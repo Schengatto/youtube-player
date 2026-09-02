@@ -106,6 +106,27 @@ a.settings-item { text-decoration: none; }
 .settings-switch.on { background: var(--accent-30); }
 .settings-switch.on::after { transform: translateX(16px); background: var(--accent); }
 
+.settings-item-static { cursor: default; }
+.settings-item-static:hover { background: none; color: var(--text-tertiary); }
+
+.settings-speeds { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0 1rem; }
+
+.settings-speed {
+  background: var(--white-8);
+  border: none;
+  color: var(--text-tertiary);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-speed:hover { color: var(--text-primary); }
+.settings-speed.active { background: var(--accent-15); color: var(--accent); }
+
 .settings-hint {
   margin: 0.25rem 1rem 0;
   font-size: 0.78rem;

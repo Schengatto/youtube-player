@@ -7,7 +7,8 @@ const savedChannels = ref<SavedChannel[]>([]);
 const userPreferences = ref<UserPreferences>({
   interests: [],
   language: 'it',
-  autoplay: true
+  autoplay: true,
+  playbackRate: 1
 });
 
 export const useSettings = () => {
@@ -36,11 +37,13 @@ export const useSettings = () => {
     const prefs = storage.get<UserPreferences>(STORAGE_KEYS.PREFERENCES);
     if (!prefs) return false;
     const autoplay = prefs.autoplay ?? true;
+    const playbackRate = prefs.playbackRate ?? 1;
     if (prefs.interests && prefs.interests.length > 0) {
-      userPreferences.value = { ...prefs, autoplay };
+      userPreferences.value = { ...prefs, autoplay, playbackRate };
       return true;
     }
     userPreferences.value.autoplay = autoplay;
+    userPreferences.value.playbackRate = playbackRate;
     return false;
   };
 
@@ -51,6 +54,11 @@ export const useSettings = () => {
 
   const setAutoplay = (enabled: boolean): void => {
     userPreferences.value.autoplay = enabled;
+    storage.set(STORAGE_KEYS.PREFERENCES, userPreferences.value);
+  };
+
+  const setPlaybackRate = (rate: number): void => {
+    userPreferences.value.playbackRate = rate;
     storage.set(STORAGE_KEYS.PREFERENCES, userPreferences.value);
   };
 
@@ -67,6 +75,7 @@ export const useSettings = () => {
     isChannelSaved,
     loadPreferences,
     savePreferences,
-    setAutoplay
+    setAutoplay,
+    setPlaybackRate
   };
 };
